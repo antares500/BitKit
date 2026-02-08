@@ -76,10 +76,10 @@ final class NostrRelayManager: ObservableObject {
     private var shouldUseTor: Bool { networkService.userTorEnabled }
     
     // Exponential backoff configuration
-    private let initialBackoffInterval: TimeInterval = TransportConfig.nostrRelayInitialBackoffSeconds
-    private let maxBackoffInterval: TimeInterval = TransportConfig.nostrRelayMaxBackoffSeconds
-    private let backoffMultiplier: Double = TransportConfig.nostrRelayBackoffMultiplier
-    private let maxReconnectAttempts = TransportConfig.nostrRelayMaxReconnectAttempts
+    private let initialBackoffInterval: TimeInterval = TransportConfig.shared.nostrRelayInitialBackoffSeconds
+    private let maxBackoffInterval: TimeInterval = TransportConfig.shared.nostrRelayMaxBackoffSeconds
+    private let backoffMultiplier: Double = TransportConfig.shared.nostrRelayBackoffMultiplier
+    private let maxReconnectAttempts = TransportConfig.shared.nostrRelayMaxReconnectAttempts
     
     // Bump generation to invalidate scheduled reconnects when we reset/disconnect
     private var connectionGeneration: Int = 0

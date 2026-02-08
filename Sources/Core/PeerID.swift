@@ -44,12 +44,12 @@ public struct PeerID: Equatable, Hashable {
 extension PeerID {
     /// Convenience init to create GeoDM PeerID by appending `"nostr_"` to the first 16 characters of `pubKey`
     init(nostr_ pubKey: String) {
-        self.init(prefix: .geoDM, bare: pubKey.prefix(TransportConfig.nostrConvKeyPrefixLength))
+        self.init(prefix: .geoDM, bare: pubKey.prefix(TransportConfig.shared.nostrConvKeyPrefixLength))
     }
     
     /// Convenience init to create GeoChat PeerID by appending `"nostr:"` to the first 8 characters of `pubKey`
     init(nostr pubKey: String) {
-        self.init(prefix: .geoChat, bare: pubKey.prefix(TransportConfig.nostrShortKeyDisplayLength))
+        self.init(prefix: .geoChat, bare: pubKey.prefix(TransportConfig.shared.nostrShortKeyDisplayLength))
     }
     
     /// Convenience init to create PeerID from String/Substring by splitting it into prefix and bare parts

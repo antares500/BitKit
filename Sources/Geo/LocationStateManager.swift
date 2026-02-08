@@ -86,7 +86,7 @@ public final class LocationStateManager: NSObject, CLLocationManagerDelegate, Ob
 
         cl.delegate = self
         cl.desiredAccuracy = kCLLocationAccuracyHundredMeters
-        cl.distanceFilter = TransportConfig.locationDistanceFilterMeters
+        cl.distanceFilter = TransportConfig.shared.locationDistanceFilterMeters
 
         loadPersistedState()
         initializePermissionState()
@@ -186,12 +186,12 @@ public final class LocationStateManager: NSObject, CLLocationManagerDelegate, Ob
         }
     }
 
-    func beginLiveRefresh(interval: TimeInterval = TransportConfig.locationLiveRefreshInterval) {
+    func beginLiveRefresh(interval: TimeInterval = TransportConfig.shared.locationLiveRefreshInterval) {
         guard permissionState == .authorized else { return }
         refreshTimer?.invalidate()
         refreshTimer = nil
         cl.desiredAccuracy = kCLLocationAccuracyNearestTenMeters
-        cl.distanceFilter = TransportConfig.locationDistanceFilterLiveMeters
+        cl.distanceFilter = TransportConfig.shared.locationDistanceFilterLiveMeters
         cl.startUpdatingLocation()
         requestOneShotLocation()
     }
@@ -201,7 +201,7 @@ public final class LocationStateManager: NSObject, CLLocationManagerDelegate, Ob
         refreshTimer = nil
         cl.stopUpdatingLocation()
         cl.desiredAccuracy = kCLLocationAccuracyHundredMeters
-        cl.distanceFilter = TransportConfig.locationDistanceFilterMeters
+        cl.distanceFilter = TransportConfig.shared.locationDistanceFilterMeters
     }
 
     // MARK: - Public API (Channel Selection)

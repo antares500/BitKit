@@ -23,7 +23,7 @@ final class GeoRelayDirectory {
     private let cacheFileName = "georelays_cache.csv"
     private let lastFetchKey = "georelay.lastFetchAt"
     private let remoteURL = URL(string: "https://raw.githubusercontent.com/permissionlesstech/georelays/refs/heads/main/nostr_relays.csv")!
-    private let fetchInterval: TimeInterval = TransportConfig.geoRelayFetchIntervalSeconds
+    private let fetchInterval: TimeInterval = TransportConfig.shared.geoRelayFetchIntervalSeconds
 
     private var refreshTimer: Timer?
     private var retryTask: Task<Void, Never>?
@@ -90,7 +90,7 @@ final class GeoRelayDirectory {
         if !force {
             guard now.timeIntervalSince(last) >= fetchInterval else { return }
         } else if last != .distantPast,
-                  now.timeIntervalSince(last) < TransportConfig.geoRelayRetryInitialSeconds {
+                  now.timeIntervalSince(last) < TransportConfig.shared.geoRelayRetryInitialSeconds {
             // Skip forced fetches if we just refreshed moments ago.
             return
         }
@@ -172,8 +172,8 @@ final class GeoRelayDirectory {
     @MainActor
     private func scheduleRetry() {
         retryAttempt = min(retryAttempt + 1, 10)
-        let base = TransportConfig.geoRelayRetryInitialSeconds
-        let maxDelay = TransportConfig.geoRelayRetryMaxSeconds
+        let base = TransportConfig.shared.geoRelayRetryInitialSeconds
+        let maxDelay = TransportConfig.shared.geoRelayRetryMaxSeconds
         let multiplier = pow(2.0, Double(max(retryAttempt - 1, 0)))
         let calculated = base * multiplier
         let delay = min(maxDelay, max(base, calculated))
@@ -321,7 +321,7 @@ final class GeoRelayDirectory {
 
     private func startRefreshTimer() {
         refreshTimer?.invalidate()
-        let interval = TransportConfig.geoRelayRefreshCheckIntervalSeconds
+        let interval = TransportConfig.shared.geoRelayRefreshCheckIntervalSeconds
         guard interval > 0 else { return }
 
         let timer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { [weak self] _ in

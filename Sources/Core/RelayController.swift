@@ -26,7 +26,7 @@ public struct RelayController {
                        isAnnounce: Bool,
                        degree: Int,
                        highDegreeThreshold: Int = 10) -> RelayDecision {
-        let ttlCap = min(ttl, TransportConfig.messageTTLDefault)
+        let ttlCap = min(ttl, TransportConfig.shared.messageTTLDefault)
 
         // Suppress obvious non-relays
         if ttlCap <= 1 || senderIsSelf {
@@ -45,12 +45,12 @@ public struct RelayController {
         }
 
         if isFragment {
-            let ttlLimit = min(ttlCap, TransportConfig.bleFragmentRelayTtlCap)
+            let ttlLimit = min(ttlCap, TransportConfig.shared.bleFragmentRelayTtlCap)
             guard ttlLimit > 1 else {
                 return RelayDecision(shouldRelay: false, newTTL: ttlLimit, delayMs: 0)
             }
             let newTTL = ttlLimit &- 1
-            let delayMs = Int.random(in: TransportConfig.bleFragmentRelayMinDelayMs...TransportConfig.bleFragmentRelayMaxDelayMs)
+            let delayMs = Int.random(in: TransportConfig.shared.bleFragmentRelayMinDelayMs...TransportConfig.shared.bleFragmentRelayMaxDelayMs)
             return RelayDecision(shouldRelay: true, newTTL: newTTL, delayMs: delayMs)
         }
 
