@@ -9,7 +9,8 @@ Paquete Swift modular para comunicaciones P2P seguras, privadas y resistentes a 
 ## Características Principales
 
 - **🔐 Encriptación End-to-End**: Protocolo Noise con forward secrecy perfecta
-- **📡 Múltiples Transportes**: BLE mesh offline, Nostr relays globales, geolocalización, Tor
+- **📡 Múltiples Transportes**: BLE mesh offline, Nostr relays globales, Tor
+- **🌍 Geolocalización**: Mensajería basada en ubicación y canales geo
 - **🎵 Multimedia Completo**: Voz, imágenes, video, streaming y transferencias de archivos
 - **👥 Grupos y Moderación**: Chat grupal con moderación distribuida y analytics
 - **🛡️ Anonimato Avanzado**: Tor, zero-knowledge proofs, verificación de identidad
@@ -31,27 +32,34 @@ dependencies: [
 ]
 ```
 
-Elige los targets según tus necesidades:
+Elige los targets según tus necesidades o usa presets recomendados:
 
+#### Presets Recomendados
 ```swift
-targets: [
-    .target(name: "MiApp", dependencies: [
-        "BitCore",           // Núcleo requerido
-        "BitBLE",            // BLE mesh offline
-        "BitNostr",          // Nostr relays globales
-        "BitGeo",            // Geolocalización
-        "BitState",          // Persistencia segura
-        "BitMedia",          // Multimedia
-        "BitTor",            // Anonimato (opcional)
-        "BitCommunications", // Coordinación de transportes
-        "BitChat",           // Chat grupal y moderación
-        "BitReliability",    // Confiabilidad y failover
-        "BitSync",           // Sincronización
-        "BitVerification",   // Verificación de identidad
-        "BitGroup",          // Gestión de grupos y moderación
-        "BitAnalytics"       // Analytics y métricas de comunidad
-    ])
-]
+// Básico (mensajería simple)
+.target(name: "MiApp", dependencies: [
+    "BitCore",           // Núcleo requerido
+    "BitCommunications"  // Coordinación básica
+])
+
+// Completo (todo incluido)
+.target(name: "MiApp", dependencies: [
+    "BitKit"  // Incluye todos los módulos
+])
+
+// Personalizado (elige módulos)
+.target(name: "MiApp", dependencies: [
+    "BitCore",                  // Núcleo requerido
+    "BitTransport",             // BLE + Nostr
+    "BitGeo",                   // Geolocalización
+    "BitState",                 // Persistencia
+    "BitMedia",                 // Multimedia
+    "BitTor",                   // Anonimato
+    "BitCommunications",        // Coordinación
+    "BitChatGroup",             // Chat y grupos
+    "BitReliabilityExtended",   // Confiabilidad, sync, verificación
+    "BitAnalytics"              // Métricas
+])
 ```
 
 ## Arquitectura
@@ -59,19 +67,16 @@ targets: [
 ```
 bitKit
 ├── BitCore          # Núcleo: protocolos, encriptación, utilidades
-├── BitBLE           # Transporte BLE mesh offline
-├── BitNostr         # Transporte Nostr relays globales
+├── BitTransport     # Transportes: BLE mesh + Nostr relays
 ├── BitGeo           # Geolocalización y canales geo
 ├── BitState         # Persistencia segura (Keychain)
 ├── BitMedia         # Manejo de multimedia
 ├── BitTor           # Anonimato con Tor
 ├── BitCommunications # Coordinación de transportes
-├── BitChat          # Chat grupal y moderación
-├── BitReliability   # Confiabilidad y failover
-├── BitSync          # Sincronización
-├── BitVerification  # Verificación de identidad
-├── BitGroup         # Gestión de grupos y moderación
-└── BitAnalytics     # Analytics y métricas de comunidad
+├── BitChatGroup     # Chat individual y grupal
+├── BitReliabilityExtended # Confiabilidad, sync, verificación
+├── BitAnalytics     # Analytics y métricas de comunidad
+└── BitKit           # Todo incluido (preset completo)
 ```
 
 ## Configuración de Redes
