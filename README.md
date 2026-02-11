@@ -1,4 +1,4 @@
-![bitKit Icon](bitkit.svg)
+![bitKit Icon](bitKit.svg)
 
 # bitKit (alpha)
 Comunicaciones P2P seguras y privadas para la era moderna.
