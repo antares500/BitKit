@@ -5,7 +5,10 @@ import Foundation
 /// Todos los valores son configurables en tiempo de ejecución.
 public class TransportConfig {
     /// Singleton compartido con configuración por defecto
-    public static var shared = TransportConfig()
+    public static let shared = TransportConfig()
+
+    // Inicializador privado para singleton
+    private init() {}
 
     // MARK: - BLE / Protocol
 
@@ -27,6 +30,58 @@ public class TransportConfig {
     /// - Default: 6 peers
     public var bleHighDegreeThreshold: Int = 6
 
+    /// Intervalo mínimo para anuncios BLE (segundos)
+    /// - Default: 5.0 segundos
+    public var bleAnnounceMinInterval: TimeInterval = 5.0
+
+    /// Máximo número de enlaces centrales BLE
+    /// - Default: 10
+    public var bleMaxCentralLinks: Int = 10
+
+    /// Intervalo de límite de tasa para conexiones BLE (segundos)
+    /// - Default: 1.0 segundos
+    public var bleConnectRateLimitInterval: TimeInterval = 1.0
+
+    /// Ventana para paquetes recientes BLE (segundos)
+    /// - Default: 10.0 segundos
+    public var bleRecentPacketWindowSeconds: TimeInterval = 10.0
+
+    /// Máximo conteo de paquetes recientes BLE
+    /// - Default: 100
+    public var bleRecentPacketWindowMaxCount: Int = 100
+
+    /// Intervalo para anuncios BLE (segundos)
+    /// - Default: 30.0 segundos
+    public var bleAnnounceIntervalSeconds: TimeInterval = 30.0
+
+    /// Base de anuncios conectados en redes densas (segundos)
+    /// - Default: 60.0 segundos
+    public var bleConnectedAnnounceBaseSecondsDense: TimeInterval = 60.0
+
+    /// Base de anuncios conectados en redes dispersas (segundos)
+    /// - Default: 30.0 segundos
+    public var bleConnectedAnnounceBaseSecondsSparse: TimeInterval = 30.0
+
+    /// Jitter de anuncios conectados en redes densas (segundos)
+    /// - Default: 10.0 segundos
+    public var bleConnectedAnnounceJitterDense: TimeInterval = 10.0
+
+    /// Jitter de anuncios conectados en redes dispersas (segundos)
+    /// - Default: 5.0 segundos
+    public var bleConnectedAnnounceJitterSparse: TimeInterval = 5.0
+
+    /// Retención de alcance verificado BLE (segundos)
+    /// - Default: 3600.0 segundos
+    public var bleReachabilityRetentionVerifiedSeconds: TimeInterval = 3600.0
+
+    /// Retención de alcance no verificado BLE (segundos)
+    /// - Default: 1800.0 segundos
+    public var bleReachabilityRetentionUnverifiedSeconds: TimeInterval = 1800.0
+
+    /// Timeout de inactividad de peer BLE (segundos)
+    /// - Default: 300.0 segundos
+    public var blePeerInactivityTimeoutSeconds: TimeInterval = 300.0
+
     /// Límite de transferencias grandes simultáneas
     /// - Default: 2
     public var bleMaxConcurrentTransfers: Int = 2
@@ -43,7 +98,7 @@ public class TransportConfig {
     /// - Default: 5 hops
     public var bleFragmentRelayTtlCap: UInt8 = 5
 
-    // BLE operational delays
+    /// BLE operational delays
     public var bleInitialAnnounceDelaySeconds: TimeInterval = 0.6
     public var bleConnectTimeoutSeconds: TimeInterval = 8.0
     public var bleRestartScanDelaySeconds: TimeInterval = 0.1
@@ -55,11 +110,65 @@ public class TransportConfig {
     public var bleDisconnectNotifyDebounceSeconds: TimeInterval = 1.0
     public var bleDirectedSpoolWindowSeconds: TimeInterval = 30.0
 
-    // MARK: - UI / User Experience
+    /// Umbral RSSI para enlaces débiles
+    /// - Default: -70 dBm
+    public var bleWeakLinkRSSICutoff: Int = -70
 
-    /// Límite de mensajes en cola de envío
-    /// - Default: 1000
-    public var uiMaxQueuedMessages: Int = 1000
+    /// Tiempo de enfriamiento para reenlaces débiles (segundos)
+    /// - Default: 30 segundos
+    public var bleWeakLinkCooldownSeconds: TimeInterval = 30.0
+
+    /// Factor de retroceso para límite de tasa de suscripción
+    /// - Default: 2.0
+    public var bleSubscriptionRateLimitBackoffFactor: Double = 2.0
+
+    /// Máximo retroceso para límite de tasa de suscripción (segundos)
+    /// - Default: 300 segundos
+    public var bleSubscriptionRateLimitMaxBackoffSeconds: TimeInterval = 300.0
+
+    /// Máximo número de intentos para límite de tasa de suscripción
+    /// - Default: 10
+    public var bleSubscriptionRateLimitMaxAttempts: Int = 10
+
+    /// Capacidad máxima del buffer de escritura pendiente (bytes)
+    /// - Default: 1048576 (1MB)
+    public var blePendingWriteBufferCapBytes: Int = 1048576
+
+    /// Tiempo máximo esperado para escritura (ms)
+    /// - Default: 5000 ms
+    public var bleExpectedWriteMaxMs: Int = 5000
+
+    /// Tiempo esperado por fragmento de escritura (ms)
+    /// - Default: 50 ms
+    public var bleExpectedWritePerFragmentMs: Int = 50
+
+    /// Espaciado entre fragmentos dirigidos (ms)
+    /// - Default: 25 ms
+    public var bleFragmentSpacingDirectedMs: Int = 25
+
+    /// Espaciado entre fragmentos (ms)
+    /// - Default: 8 ms
+    public var bleFragmentSpacingMs: Int = 8
+
+    /// Umbral RSSI dinámico por defecto
+    /// - Default: -75 dBm
+    public var bleDynamicRSSIThresholdDefault: Int = -75
+
+    /// Duración activa del ciclo de trabajo (segundos)
+    /// - Default: 10.0 segundos
+    public var bleDutyOnDuration: TimeInterval = 10.0
+
+    /// Duración inactiva del ciclo de trabajo (segundos)
+    /// - Default: 20.0 segundos
+    public var bleDutyOffDuration: TimeInterval = 20.0
+
+    /// Intervalo de mantenimiento BLE (segundos)
+    /// - Default: 30.0 segundos
+    public var bleMaintenanceInterval: TimeInterval = 30.0
+
+    /// Tolerancia de mantenimiento BLE (segundos)
+    /// - Default: 5 segundos
+    public var bleMaintenanceLeewaySeconds: Int = 5
 
     /// Límite de mensajes en cola de recepción
     /// - Default: 1000
@@ -89,54 +198,6 @@ public class TransportConfig {
     /// - Default: 50
     public var uiMaxQueuedModerationMessages: Int = 50
 
-    /// Límite de mensajes en cola de analíticas
-    /// - Default: 100
-    public var uiMaxQueuedAnalyticsMessages: Int = 100
-
-    /// Límite de mensajes en cola de comunidad
-    /// - Default: 100
-    public var uiMaxQueuedCommunityMessages: Int = 100
-
-    /// Límite de mensajes en cola de identidad
-    /// - Default: 50
-    public var uiMaxQueuedIdentityMessages: Int = 50
-
-    /// Límite de mensajes en cola de verificación
-    /// - Default: 50
-    public var uiMaxQueuedVerificationMessages: Int = 50
-
-    /// Límite de mensajes en cola de transporte
-    /// - Default: 100
-    public var uiMaxQueuedTransportMessages: Int = 100
-
-    /// Límite de mensajes en cola de sincronización
-    /// - Default: 100
-    public var uiMaxQueuedSyncMessages: Int = 100
-
-    /// Límite de mensajes en cola de estado
-    /// - Default: 50
-    public var uiMaxQueuedStateMessages: Int = 50
-
-    /// Límite de mensajes en cola de Tor
-    /// - Default: 50
-    public var uiMaxQueuedTorMessages: Int = 50
-
-    /// Límite de mensajes en cola de Nostr
-    /// - Default: 100
-    public var uiMaxQueuedNostrMessages: Int = 100
-
-    /// Límite de mensajes en cola de Geo
-    /// - Default: 100
-    public var uiMaxQueuedGeoMessages: Int = 100
-
-    /// Límite de mensajes en cola de Media
-    /// - Default: 50
-    public var uiMaxQueuedMediaMessages: Int = 50
-
-    /// Límite de mensajes en cola de Noise
-    /// - Default: 50
-    public var uiMaxQueuedNoiseMessages: Int = 50
-
     /// Límite de mensajes en cola de Utils
     /// - Default: 50
     public var uiMaxQueuedUtilsMessages: Int = 50
@@ -149,13 +210,85 @@ public class TransportConfig {
     /// - Default: 100
     public var uiMaxQueuedRoutingMessages: Int = 100
 
-    /// Límite de mensajes en cola de Sync
-    /// - Default: 100
-    public var uiMaxQueuedSyncMessages2: Int = 100
-
-    /// Límite de mensajes en cola de Verification
+    /// Máximo número de candidatos de conexión BLE
     /// - Default: 50
-    public var uiMaxQueuedVerificationMessages2: Int = 50
+    public var bleConnectionCandidatesMax: Int = 50
+
+    /// Tiempo de vida de fragmentos BLE (segundos)
+    /// - Default: 30.0 segundos
+    public var bleFragmentLifetimeSeconds: TimeInterval = 30.0
+
+    /// Ventana de retroceso para timeout de conexión BLE (segundos)
+    /// - Default: 300.0 segundos
+    public var bleConnectTimeoutBackoffWindowSeconds: TimeInterval = 300.0
+
+    /// Tiempo de vida de registros de entrada BLE (segundos)
+    /// - Default: 60.0 segundos
+    public var bleIngressRecordLifetimeSeconds: TimeInterval = 60.0
+
+    /// Edad máxima para deduplicación de mensajes (segundos)
+    /// - Default: 300.0 segundos
+    public var messageDedupMaxAgeSeconds: TimeInterval = 300.0
+
+    /// Ventana para forzar escaneo por tráfico reciente BLE (segundos)
+    /// - Default: 10.0 segundos
+    public var bleRecentTrafficForceScanSeconds: TimeInterval = 10.0
+
+    /// Duración activa del ciclo de trabajo en redes densas (segundos)
+    /// - Default: 5.0 segundos
+    public var bleDutyOnDurationDense: TimeInterval = 5.0
+
+    /// Duración inactiva del ciclo de trabajo en redes densas (segundos)
+    /// - Default: 10.0 segundos
+    public var bleDutyOffDurationDense: TimeInterval = 10.0
+
+    /// Umbral para relajar aislamiento BLE (segundos)
+    /// - Default: 60.0 segundos
+    public var bleIsolationRelaxThresholdSeconds: TimeInterval = 60.0
+
+    /// Umbral RSSI para peers aislados relajado
+    /// - Default: -80 dBm
+    public var bleRSSIIsolatedRelaxed: Int = -80
+
+    /// Umbral RSSI base para peers aislados
+    /// - Default: -70 dBm
+    public var bleRSSIIsolatedBase: Int = -70
+
+    /// Umbral RSSI para peers conectados
+    /// - Default: -65 dBm
+    public var bleRSSIConnectedThreshold: Int = -65
+
+    /// Ventana para timeouts recientes BLE (segundos)
+    /// - Default: 300.0 segundos
+    public var bleRecentTimeoutWindowSeconds: TimeInterval = 300.0
+
+    /// Umbral de conteo de timeouts recientes BLE
+    /// - Default: 5
+    public var bleRecentTimeoutCountThreshold: Int = 5
+
+    /// Umbral RSSI alto para timeouts BLE
+    /// - Default: -60 dBm
+    public var bleRSSIHighTimeoutThreshold: Int = -60
+
+    /// Delay corto para escritura en thread BLE (segundos)
+    /// - Default: 0.01 segundos
+    public var bleThreadSleepWriteShortDelaySeconds: TimeInterval = 0.01
+
+    /// Capacidad máxima de notificaciones pendientes BLE
+    /// - Default: 100
+    public var blePendingNotificationsCapCount: Int = 100
+
+    /// Intervalo mínimo para forzar anuncio BLE (segundos)
+    /// - Default: 5.0 segundos
+    public var bleForceAnnounceMinIntervalSeconds: TimeInterval = 5.0
+
+    /// Máximo número de reintentos para notificaciones BLE
+    /// - Default: 3
+    public var bleNotificationRetryMaxAttempts: Int = 3
+
+    /// Delay de reintento para notificaciones BLE (ms)
+    /// - Default: 1000 ms
+    public var bleNotificationRetryDelayMs: Int = 1000
 
     // MARK: - Timers / Timeouts
 
@@ -167,258 +300,164 @@ public class TransportConfig {
     /// - Default: 300 segundos (5 minutos)
     public var fileOperationTimeoutSeconds: TimeInterval = 300.0
 
-    /// Timeout para operaciones de encriptación
-    /// - Default: 10 segundos
-    public var encryptionTimeoutSeconds: TimeInterval = 10.0
-
-    /// Timeout para operaciones de verificación
-    /// - Default: 5 segundos
-    public var verificationTimeoutSeconds: TimeInterval = 5.0
+    // MARK: - Sync Configuration
 
     /// Timeout para operaciones de sincronización
     /// - Default: 60 segundos
     public var syncTimeoutSeconds: TimeInterval = 60.0
 
-    /// Timeout para operaciones de ubicación
-    /// - Default: 10 segundos
-    public var locationTimeoutSeconds: TimeInterval = 10.0
+    /// Intervalo de sincronización por defecto
+    /// - Default: 300 segundos (5 minutos)
+    public var syncDefaultIntervalSeconds: TimeInterval = 300.0
 
-    /// Timeout para operaciones de Nostr
-    /// - Default: 15 segundos
-    public var nostrTimeoutSeconds: TimeInterval = 15.0
+    /// Capacidad de visto en sincronización
+    /// - Default: 10000
+    public var syncSeenCapacity: Int = 10000
 
-    /// Timeout para operaciones de Tor
-    /// - Default: 30 segundos
-    public var torTimeoutSeconds: TimeInterval = 30.0
+    /// Máximo bytes para GCS en sincronización
+    /// - Default: 1048576 (1MB)
+    public var syncGCSMaxBytes: Int = 1048576
 
-    /// Timeout para operaciones de Geo
-    /// - Default: 10 segundos
-    public var geoTimeoutSeconds: TimeInterval = 10.0
+    /// FPR objetivo para GCS en sincronización
+    /// - Default: 0.001
+    public var syncGCSTargetFpr: Double = 0.001
 
-    /// Timeout para operaciones de Media
-    /// - Default: 60 segundos
-    public var mediaTimeoutSeconds: TimeInterval = 60.0
+    /// Edad máxima de mensaje en sincronización (segundos)
+    /// - Default: 86400.0 (1 día)
+    public var syncMaxMessageAgeSeconds: TimeInterval = 86400.0
 
-    /// Timeout para operaciones de Noise
-    /// - Default: 5 segundos
-    public var noiseTimeoutSeconds: TimeInterval = 5.0
+    /// Intervalo de mantenimiento en sincronización (segundos)
+    /// - Default: 3600.0 (1 hora)
+    public var syncMaintenanceIntervalSeconds: TimeInterval = 3600.0
 
-    /// Timeout para operaciones de Utils
-    /// - Default: 10 segundos
-    public var utilsTimeoutSeconds: TimeInterval = 10.0
+    /// Intervalo de limpieza de peers obsoletos en sincronización (segundos)
+    /// - Default: 7200.0 (2 horas)
+    public var syncStalePeerCleanupIntervalSeconds: TimeInterval = 7200.0
 
-    /// Timeout para operaciones de Reliability
-    /// - Default: 30 segundos
-    public var reliabilityTimeoutSeconds: TimeInterval = 30.0
+    /// Timeout de peers obsoletos en sincronización (segundos)
+    /// - Default: 259200.0 (3 días)
+    public var syncStalePeerTimeoutSeconds: TimeInterval = 259200.0
 
-    /// Timeout para operaciones de Routing
-    /// - Default: 15 segundos
-    public var routingTimeoutSeconds: TimeInterval = 15.0
+    /// Capacidad de fragmentos en sincronización
+    /// - Default: 100
+    public var syncFragmentCapacity: Int = 100
 
-    /// Timeout para operaciones de Sync
-    /// - Default: 60 segundos
-    public var syncTimeoutSeconds2: TimeInterval = 60.0
+    /// Capacidad de transferencias de archivos en sincronización
+    /// - Default: 10
+    public var syncFileTransferCapacity: Int = 10
 
-    /// Timeout para operaciones de Verification
-    /// - Default: 5 segundos
-    public var verificationTimeoutSeconds2: TimeInterval = 5.0
+    /// Intervalo de sincronización de fragmentos (segundos)
+    /// - Default: 60.0
+    public var syncFragmentIntervalSeconds: TimeInterval = 60.0
+
+    /// Intervalo de sincronización de transferencias de archivos (segundos)
+    /// - Default: 300.0
+    public var syncFileTransferIntervalSeconds: TimeInterval = 300.0
+
+    /// Intervalo de sincronización de mensajes (segundos)
+    /// - Default: 30.0
+    public var syncMessageIntervalSeconds: TimeInterval = 30.0
 
     // MARK: - Location / Geo
 
-    /// Precisión de ubicación por defecto
-    /// - Default: 10 metros
-    public var locationDefaultAccuracy: Double = 10.0
-
-    /// Distancia mínima para actualizaciones de ubicación
-    /// - Default: 50 metros
-    public var locationMinDistanceFilter: Double = 50.0
-
-    /// Timeout para obtener ubicación
-    /// - Default: 30 segundos
-    public var locationAcquisitionTimeout: TimeInterval = 30.0
-
-    /// Intervalo máximo entre actualizaciones de ubicación
-    /// - Default: 300 segundos (5 minutos)
-    public var locationMaxUpdateInterval: TimeInterval = 300.0
-
-    /// Radio de búsqueda de relays geográficos
-    /// - Default: 5000 metros (5 km)
-    public var geoRelaySearchRadius: Double = 5000.0
-
-    /// Límite de relays geográficos por búsqueda
-    /// - Default: 10
-    public var geoMaxRelaysPerSearch: Int = 10
-
-    /// Timeout para búsqueda de relays geográficos
+    /// Timeout para operaciones de geolocalización
     /// - Default: 10 segundos
-    public var geoRelaySearchTimeout: TimeInterval = 10.0
+    public var locationTimeoutSeconds: TimeInterval = 10.0
 
-    /// Intervalo de actualización de relays geográficos
-    /// - Default: 3600 segundos (1 hora)
-    public var geoRelayUpdateInterval: TimeInterval = 3600.0
+    /// Precisión por defecto para geolocalización
+    /// - Default: 100 metros
+    public var locationDefaultAccuracy: Double = 100.0
+
+    /// Intervalo de refresco en vivo de ubicación (segundos)
+    /// - Default: 60.0 segundos
+    public var locationLiveRefreshInterval: TimeInterval = 60.0
+
+    /// Filtro de distancia para ubicación normal (metros)
+    /// - Default: 100.0 metros
+    public var locationDistanceFilterMeters: Double = 100.0
+
+    /// Filtro de distancia para ubicación en vivo (metros)
+    /// - Default: 10.0 metros
+    public var locationDistanceFilterLiveMeters: Double = 10.0
 
     // MARK: - Nostr
 
-    /// Límite de conexiones Nostr simultáneas
+    /// Longitud del prefijo de clave de conversación Nostr
+    /// - Default: 16
+    public var nostrConvKeyPrefixLength: Int = 16
+
+    /// Longitud de visualización corta de clave Nostr
+    /// - Default: 8
+    public var nostrShortKeyDisplayLength: Int = 8
+
+    /// Timeout inicial para relay Nostr (segundos)
+    /// - Default: 5.0 segundos
+    public var nostrRelayInitialBackoffSeconds: TimeInterval = 5.0
+
+    /// Timeout máximo para relay Nostr (segundos)
+    /// - Default: 300.0 segundos
+    public var nostrRelayMaxBackoffSeconds: TimeInterval = 300.0
+
+    /// Multiplicador de retroceso para relay Nostr
+    /// - Default: 2.0
+    public var nostrRelayBackoffMultiplier: Double = 2.0
+
+    /// Máximo número de reintentos para relay Nostr
     /// - Default: 10
-    public var nostrMaxConnections: Int = 10
+    public var nostrRelayMaxReconnectAttempts: Int = 10
 
     /// Timeout para conexiones Nostr
     /// - Default: 10 segundos
-    public var nostrConnectionTimeout: TimeInterval = 10.0
+    public var nostrConnectionTimeoutSeconds: TimeInterval = 10.0
 
-    /// Límite de mensajes Nostr por segundo
-    /// - Default: 100
-    public var nostrMaxMessagesPerSecond: Int = 100
+    // MARK: - Geo Relay
 
-    /// Límite de tamaño de mensaje Nostr
-    /// - Default: 16384 bytes (16 KB)
-    public var nostrMaxMessageSize: Int = 16384
+    /// Intervalo de fetch para geo relay (segundos)
+    /// - Default: 3600.0 segundos (1 hora)
+    public var geoRelayFetchIntervalSeconds: TimeInterval = 3600.0
 
-    /// Límite de suscripciones Nostr activas
-    /// - Default: 50
-    public var nostrMaxActiveSubscriptions: Int = 50
+    /// Segundos iniciales de retry para geo relay
+    /// - Default: 60.0 segundos
+    public var geoRelayRetryInitialSeconds: TimeInterval = 60.0
 
-    /// Timeout para suscripciones Nostr
-    /// - Default: 300 segundos (5 minutos)
-    public var nostrSubscriptionTimeout: TimeInterval = 300.0
+    /// Segundos máximos de retry para geo relay
+    /// - Default: 3600.0 segundos (1 hora)
+    public var geoRelayRetryMaxSeconds: TimeInterval = 3600.0
 
-    /// Intervalo de ping Nostr
-    /// - Default: 60 segundos
-    public var nostrPingInterval: TimeInterval = 60.0
-
-    /// Límite de relays Nostr por cliente
-    /// - Default: 5
-    public var nostrMaxRelaysPerClient: Int = 5
-
-    // MARK: - Compression / Encoding
-
-    /// Nivel de compresión por defecto
-    /// - Default: 6 (balance entre velocidad y compresión)
-    /// - Rango: 0 (sin compresión) - 9 (máxima compresión)
-    public var compressionDefaultLevel: Int = 6
-
-    /// Umbral mínimo para compresión
-    /// - Default: 1024 bytes
-    public var compressionMinSizeThreshold: Int = 1024
-
-    /// Límite máximo de tamaño comprimido (para evitar expansión)
-    /// - Default: 1048576 bytes (1 MB)
-    public var compressionMaxCompressedSize: Int = 1048576
-
-    /// Timeout para operaciones de compresión
-    /// - Default: 5 segundos
-    public var compressionTimeout: TimeInterval = 5.0
-
-    /// Buffer size para operaciones de compresión
-    /// - Default: 8192 bytes
-    public var compressionBufferSize: Int = 8192
+    /// Intervalo de check de refresh para geo relay (segundos)
+    /// - Default: 300.0 segundos (5 minutos)
+    public var geoRelayRefreshCheckIntervalSeconds: TimeInterval = 300.0
 
     // MARK: - File Transfers
 
-    /// Límite de tamaño de archivo por defecto
-    /// - Default: 10485760 bytes (10 MB)
-    public var fileTransferMaxSize: Int = 10485760
+    /// Timeout para transferencias de archivos
+    /// - Default: 600 segundos (10 minutos)
+    public var fileTransferTimeoutSeconds: TimeInterval = 600.0
 
-    /// Límite de transferencias simultáneas
-    /// - Default: 3
-    public var fileTransferMaxConcurrent: Int = 3
-
-    /// Timeout para transferencias de archivo
-    /// - Default: 300 segundos (5 minutos)
-    public var fileTransferTimeout: TimeInterval = 300.0
-
-    /// Tamaño de chunk para transferencias
-    /// - Default: 65536 bytes (64 KB)
-    public var fileTransferChunkSize: Int = 65536
-
-    /// Límite de reintentos para transferencias
-    /// - Default: 3
-    public var fileTransferMaxRetries: Int = 3
-
-    /// Delay entre reintentos de transferencia
-    /// - Default: 2 segundos
-    public var fileTransferRetryDelay: TimeInterval = 2.0
-
-    /// Límite de archivos en cola
-    /// - Default: 10
-    public var fileTransferMaxQueued: Int = 10
+    /// Tamaño máximo de fragmento para transferencias de archivos
+    /// - Default: 65536 bytes (64KB)
+    public var fileTransferMaxFragmentSize: Int = 65536
 
     // MARK: - Validation
 
-    /// Método de validación de configuración
+    /// Valida que todos los valores de configuración sean razonables
     public func validate() throws {
         // BLE validation
-        guard bleDefaultFragmentSize >= 64 && bleDefaultFragmentSize <= 512 else {
-            throw ValidationError.invalidValue("bleDefaultFragmentSize must be between 64 and 512")
+        guard bleDefaultFragmentSize >= 128 && bleDefaultFragmentSize <= 512 else {
+            throw ValidationError.invalidValue("bleDefaultFragmentSize must be between 128 and 512")
         }
+
         guard messageTTLDefault >= 1 && messageTTLDefault <= 20 else {
             throw ValidationError.invalidValue("messageTTLDefault must be between 1 and 20")
         }
-        guard bleMaxInFlightAssemblies >= 1 && bleMaxInFlightAssemblies <= 1000 else {
-            throw ValidationError.invalidValue("bleMaxInFlightAssemblies must be between 1 and 1000")
-        }
-
-        // UI validation
-        let uiLimits = [uiMaxQueuedMessages, uiMaxQueuedReceivedMessages, uiMaxQueuedRetransmissions,
-                       uiMaxQueuedNotifications, uiMaxQueuedFileMessages, uiMaxQueuedLocationMessages,
-                       uiMaxQueuedStatusMessages, uiMaxQueuedModerationMessages, uiMaxQueuedAnalyticsMessages,
-                       uiMaxQueuedCommunityMessages, uiMaxQueuedIdentityMessages, uiMaxQueuedVerificationMessages,
-                       uiMaxQueuedTransportMessages, uiMaxQueuedSyncMessages, uiMaxQueuedStateMessages,
-                       uiMaxQueuedTorMessages, uiMaxQueuedNostrMessages, uiMaxQueuedGeoMessages,
-                       uiMaxQueuedMediaMessages, uiMaxQueuedNoiseMessages, uiMaxQueuedUtilsMessages,
-                       uiMaxQueuedReliabilityMessages, uiMaxQueuedRoutingMessages, uiMaxQueuedSyncMessages2,
-                       uiMaxQueuedVerificationMessages2]
-
-        for limit in uiLimits {
-            guard limit >= 1 && limit <= 10000 else {
-                throw ValidationError.invalidValue("UI queue limits must be between 1 and 10000")
-            }
-        }
-
-        // Timeout validation
-        let timeouts = [networkTimeoutSeconds, fileOperationTimeoutSeconds, encryptionTimeoutSeconds,
-                       verificationTimeoutSeconds, syncTimeoutSeconds, locationTimeoutSeconds,
-                       nostrTimeoutSeconds, torTimeoutSeconds, geoTimeoutSeconds, mediaTimeoutSeconds,
-                       noiseTimeoutSeconds, utilsTimeoutSeconds, reliabilityTimeoutSeconds,
-                       routingTimeoutSeconds, syncTimeoutSeconds2, verificationTimeoutSeconds2]
-
-        for timeout in timeouts {
-            guard timeout >= 1.0 && timeout <= 3600.0 else {
-                throw ValidationError.invalidValue("Timeouts must be between 1 and 3600 seconds")
-            }
-        }
-
-        // Location validation
-        guard locationDefaultAccuracy >= 1.0 && locationDefaultAccuracy <= 1000.0 else {
-            throw ValidationError.invalidValue("locationDefaultAccuracy must be between 1 and 1000 meters")
-        }
-        guard locationMinDistanceFilter >= 1.0 && locationMinDistanceFilter <= 10000.0 else {
-            throw ValidationError.invalidValue("locationMinDistanceFilter must be between 1 and 10000 meters")
-        }
 
         // Nostr validation
-        guard nostrMaxConnections >= 1 && nostrMaxConnections <= 100 else {
-            throw ValidationError.invalidValue("nostrMaxConnections must be between 1 and 100")
-        }
-        guard nostrMaxMessagesPerSecond >= 1 && nostrMaxMessagesPerSecond <= 1000 else {
-            throw ValidationError.invalidValue("nostrMaxMessagesPerSecond must be between 1 and 1000")
+        guard nostrConvKeyPrefixLength >= 8 && nostrConvKeyPrefixLength <= 32 else {
+            throw ValidationError.invalidValue("nostrConvKeyPrefixLength must be between 8 and 32")
         }
 
-        // Compression validation
-        guard compressionDefaultLevel >= 0 && compressionDefaultLevel <= 9 else {
-            throw ValidationError.invalidValue("compressionDefaultLevel must be between 0 and 9")
-        }
-        guard compressionMinSizeThreshold >= 100 && compressionMinSizeThreshold <= 1000000 else {
-            throw ValidationError.invalidValue("compressionMinSizeThreshold must be between 100 and 1000000 bytes")
-        }
-
-        // File transfer validation
-        guard fileTransferMaxSize >= 1024 && fileTransferMaxSize <= 1073741824 else {
-            throw ValidationError.invalidValue("fileTransferMaxSize must be between 1024 and 1073741824 bytes")
-        }
-        guard fileTransferMaxConcurrent >= 1 && fileTransferMaxConcurrent <= 10 else {
-            throw ValidationError.invalidValue("fileTransferMaxConcurrent must be between 1 and 10")
+        guard nostrShortKeyDisplayLength >= 4 && nostrShortKeyDisplayLength <= 16 else {
+            throw ValidationError.invalidValue("nostrShortKeyDisplayLength must be between 4 and 16")
         }
     }
 
@@ -426,4 +465,10 @@ public class TransportConfig {
     public enum ValidationError: Error {
         case invalidValue(String)
     }
+}
+
+// MARK: - Notifications
+
+extension Notification.Name {
+    public static let TorDidBecomeReady = Notification.Name("TorDidBecomeReady")
 }

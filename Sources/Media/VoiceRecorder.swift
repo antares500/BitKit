@@ -30,7 +30,7 @@ final class VoiceRecorder: NSObject, AVAudioRecorderDelegate {
     func requestPermission() async -> Bool {
         #if os(iOS)
         return await withCheckedContinuation { continuation in
-            AVAudioSession.sharedInstance().requestRecordPermission { granted in
+            AVAudioApplication.requestRecordPermission { granted in
                 continuation.resume(returning: granted)
             }
         }
@@ -54,8 +54,7 @@ final class VoiceRecorder: NSObject, AVAudioRecorderDelegate {
             }
 
             #if os(iOS)
-            let session = AVAudioSession.sharedInstance()
-            guard session.recordPermission == .granted else {
+            guard AVAudioApplication.recordPermission == .granted else {
                 throw RecorderError.microphoneAccessDenied
             }
             #if targetEnvironment(simulator)
@@ -69,7 +68,7 @@ final class VoiceRecorder: NSObject, AVAudioRecorderDelegate {
             try session.setCategory(
                 .playAndRecord,
                 mode: .default,
-                options: [.defaultToSpeaker, .allowBluetoothA2DP, .allowBluetoothHFP]
+                options: [.defaultToSpeaker, .allowBluetoothA2DP, .allowBluetooth]
             )
             #endif
             try session.setActive(true, options: .notifyOthersOnDeactivation)

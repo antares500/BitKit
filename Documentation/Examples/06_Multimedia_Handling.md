@@ -2,14 +2,14 @@
 
 ## Descripción
 
-Este ejemplo demuestra cómo integrar capacidades completas de multimedia en BitchatCommunications, incluyendo grabación de voz, procesamiento de imágenes, compresión de medios y streaming básico. Aprenderás a manejar archivos multimedia de forma segura, optimizarlos para transmisión P2P y proporcionar una experiencia rica de mensajería multimedia.
+Este ejemplo demuestra cómo integrar capacidades completas de multimedia en BitCommunications, incluyendo grabación de voz, procesamiento de imágenes, compresión de medios y streaming básico. Aprenderás a manejar archivos multimedia de forma segura, optimizarlos para transmisión P2P y proporcionar una experiencia rica de mensajería multimedia.
 
 **Beneficios:**
 - Comunicación multimedia completa sin depender de servicios externos
 - Optimización automática de medios para redes P2P limitadas
 - Compresión inteligente que preserva calidad
 - Streaming en tiempo real para audio/video
-- Integración perfecta con el sistema de archivos de Bitchat
+- Integración perfecta con el sistema de archivos de Bit
 
 **Consideraciones:**
 - Los archivos multimedia pueden ser grandes; considera límites de almacenamiento
@@ -21,16 +21,16 @@ Este ejemplo demuestra cómo integrar capacidades completas de multimedia en Bit
 ## Pasos Previos Obligatorios
 
 1. **Completar Configuración Básica** (Ejemplo 01)
-2. **Añadir BitchatMedia** a las dependencias del proyecto
+2. **Añadir BitMedia** a las dependencias del proyecto
 3. **Configurar permisos** en Info.plist (NSMicrophoneUsageDescription, NSCameraUsageDescription)
 4. **Implementar MediaDelegate** para manejo de eventos multimedia
 
 ## Código de Implementación
 
 ```swift
-import BitchatCore
-import BitchatMedia
-import BitchatBLE
+import BitCore
+import BitMedia
+import BitBLE
 import AVFoundation
 import UIKit
 

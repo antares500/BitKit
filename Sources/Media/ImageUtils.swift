@@ -177,7 +177,7 @@ enum MediaUtils {
 
     // Video processing
     #if os(iOS)
-    static func processVideo(at url: URL) throws -> URL {
+    static func processVideo(at url: URL) async throws -> URL {
         let attrs = try FileManager.default.attributesOfItem(atPath: url.path)
         guard let fileSize = attrs[.size] as? Int64 else {
             throw MediaUtilsError.invalidVideo
@@ -187,17 +187,17 @@ enum MediaUtils {
         }
 
         let asset = AVAsset(url: url)
-        guard asset.isPlayable else {
+        guard try await asset.load(.isPlayable) else {
             throw MediaUtilsError.invalidVideo
         }
 
         // Compress video to H.264 with lower bitrate
-        let outputURL = try makeOutputURL(for: "vid", extension: "mp4")
-        try compressVideo(asset: asset, outputURL: outputURL)
+        let outputURL = try await makeOutputURL(for: "vid", extension: "mp4")
+        try await compressVideo(asset: asset, outputURL: outputURL)
         return outputURL
     }
 
-    private static func compressVideo(asset: AVAsset, outputURL: URL) throws {
+    private static func compressVideo(asset: AVAsset, outputURL: URL) async throws {
         guard let exportSession = AVAssetExportSession(asset: asset, presetName: AVAssetExportPresetMediumQuality) else {
             throw MediaUtilsError.videoCompressionFailed
         }
@@ -205,11 +205,7 @@ enum MediaUtils {
         exportSession.outputFileType = .mp4
         exportSession.shouldOptimizeForNetworkUse = true
 
-        let semaphore = DispatchSemaphore(value: 0)
-        exportSession.exportAsynchronously {
-            semaphore.signal()
-        }
-        semaphore.wait()
+        await exportSession.export()
 
         if exportSession.status != .completed {
             throw MediaUtilsError.videoCompressionFailed

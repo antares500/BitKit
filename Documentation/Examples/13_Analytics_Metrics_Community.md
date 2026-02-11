@@ -2,7 +2,7 @@
 
 ## Descripción
 
-Este ejemplo muestra cómo implementar un sistema completo de analytics y métricas en BitchatCommunications. Aprenderás a recopilar métricas de rendimiento, analizar patrones de uso de la comunidad, generar insights accionables, y crear dashboards que ayuden a entender y mejorar la experiencia del usuario y la salud de la red.
+Este ejemplo muestra cómo implementar un sistema completo de analytics y métricas en BitCommunications. Aprenderás a recopilar métricas de rendimiento, analizar patrones de uso de la comunidad, generar insights accionables, y crear dashboards que ayuden a entender y mejorar la experiencia del usuario y la salud de la red.
 
 **Beneficios:**
 - Métricas detalladas de rendimiento y uso
@@ -33,9 +33,9 @@ Este ejemplo muestra cómo implementar un sistema completo de analytics y métri
 ## Código de Implementación
 
 ```swift
-import BitchatCore
-import BitchatBLE
-import BitchatNostr
+import BitCore
+import BitBLE
+import BitNostr
 import Combine
 import Charts
 

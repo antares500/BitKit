@@ -31,9 +31,9 @@ Este ejemplo demuestra cómo coordinar múltiples transportes de comunicación (
 ## Código de Implementación
 
 ```swift
-import BitchatCore
-import BitchatBLE
-import BitchatNostr
+import BitCore
+import BitBLE
+import BitNostr
 import Network
 import Combine
 

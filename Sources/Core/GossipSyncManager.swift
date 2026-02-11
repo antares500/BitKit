@@ -4,18 +4,18 @@ import BitLogger
 // Gossip-based sync manager using on-demand GCS filters
 public final class GossipSyncManager {
     public protocol Delegate: AnyObject {
-        func sendPacket(_ packet: BitchatPacket)
-        func sendPacket(to peerID: PeerID, packet: BitchatPacket)
-        func signPacketForBroadcast(_ packet: BitchatPacket) -> BitchatPacket
-        func verifyPacketSignature(_ packet: BitchatPacket) -> Bool
+        func sendPacket(_ packet: BitPacket)
+        func sendPacket(to peerID: PeerID, packet: BitPacket)
+        func signPacketForBroadcast(_ packet: BitPacket) -> BitPacket
+        func verifyPacketSignature(_ packet: BitPacket) -> Bool
         func getConnectedPeers() -> [PeerID]
     }
 
     private struct PacketStore {
-        private(set) var packets: [String: BitchatPacket] = [:]
+        private(set) var packets: [String: BitPacket] = [:]
         private(set) var order: [String] = []
 
-        mutating func insert(idHex: String, packet: BitchatPacket, capacity: Int) {
+        mutating func insert(idHex: String, packet: BitPacket, capacity: Int) {
             guard capacity > 0 else { return }
             if packets[idHex] != nil {
                 packets[idHex] = packet
@@ -29,14 +29,14 @@ public final class GossipSyncManager {
             }
         }
 
-        func allPackets(isFresh: (BitchatPacket) -> Bool) -> [BitchatPacket] {
+        func allPackets(isFresh: (BitPacket) -> Bool) -> [BitPacket] {
             order.compactMap { key in
                 guard let packet = packets[key], isFresh(packet) else { return nil }
                 return packet
             }
         }
 
-        mutating func remove(where shouldRemove: (BitchatPacket) -> Bool) {
+        mutating func remove(where shouldRemove: (BitPacket) -> Bool) {
             var nextOrder: [String] = []
             for key in order {
                 guard let packet = packets[key] else { continue }
@@ -49,7 +49,7 @@ public final class GossipSyncManager {
             order = nextOrder
         }
 
-        mutating func removeExpired(isFresh: (BitchatPacket) -> Bool) {
+        mutating func removeExpired(isFresh: (BitPacket) -> Bool) {
             remove { !isFresh($0) }
         }
     }
@@ -93,7 +93,7 @@ public final class GossipSyncManager {
     private var messages = PacketStore()
     private var fragments = PacketStore()
     private var fileTransfers = PacketStore()
-    private var latestAnnouncementByPeer: [PeerID: (id: String, packet: BitchatPacket)] = [:]
+    private var latestAnnouncementByPeer: [PeerID: (id: String, packet: BitPacket)] = [:]
     
     // Security: rate limiting tracker
     private var packetRateTracker: [PeerID: [TimeInterval]] = [:]
@@ -154,14 +154,14 @@ public final class GossipSyncManager {
         }
     }
 
-    func onPublicPacketSeen(_ packet: BitchatPacket) {
+    func onPublicPacketSeen(_ packet: BitPacket) {
         queue.async { [weak self] in
             self?._onPublicPacketSeen(packet)
         }
     }
 
     // Helper to check if a packet is within the age threshold
-    private func isPacketFresh(_ packet: BitchatPacket) -> Bool {
+    private func isPacketFresh(_ packet: BitPacket) -> Bool {
         let nowMs = UInt64(Date().timeIntervalSince1970 * 1000)
         let ageThresholdMs = UInt64(config.maxMessageAgeSeconds * 1000)
 
@@ -172,7 +172,7 @@ public final class GossipSyncManager {
         return packet.timestamp >= cutoffMs
     }
 
-    private func isAnnouncementFresh(_ packet: BitchatPacket) -> Bool {
+    private func isAnnouncementFresh(_ packet: BitPacket) -> Bool {
         guard config.stalePeerTimeoutSeconds > 0 else { return true }
         let nowMs = UInt64(Date().timeIntervalSince1970 * 1000)
         let timeoutMs = UInt64(config.stalePeerTimeoutSeconds * 1000)
@@ -181,26 +181,35 @@ public final class GossipSyncManager {
         return packet.timestamp >= cutoffMs
     }
 
-    private func _onPublicPacketSeen(_ packet: BitchatPacket) {
+    private func _onPublicPacketSeen(_ packet: BitPacket) {
         guard let messageType = MessageType(rawValue: packet.type) else { return }
-        
+
         // Security validations
         let sender = PeerID(hexData: packet.senderID)
+
+        // Validate PeerID
+        if !validatePeerID(sender) {
+            return // Silently drop packets from invalid/blocked peers
+        }
+
+        // Check rate limiting
         if !checkRateLimit(for: sender) {
-            SecureLogger.warning("Rate limit exceeded for peer \(sender)", category: .security)
-            return
+            return // Silently drop packets that exceed rate limits
         }
-        if config.enableSignatureVerification && !delegate!.verifyPacketSignature(packet) {
-            SecureLogger.warning("Invalid signature for packet from \(sender)", category: .security)
-            return
+
+        // Validate timestamp
+        if !validateTimestamp(packet) {
+            return // Silently drop packets with invalid timestamps
         }
-        if packet.payload.count > config.maxPayloadSizeBytes {
-            SecureLogger.warning("Payload size \(packet.payload.count) exceeds limit \(config.maxPayloadSizeBytes) for peer \(sender)", category: .security)
-            return
+
+        // Validate signature
+        if !validateSignature(packet) {
+            return // Silently drop packets with invalid signatures
         }
-        if config.enableContentValidation && !validatePacketContent(packet) {
-            SecureLogger.warning("Content validation failed for packet from \(sender)", category: .security)
-            return
+
+        // Validate content
+        if !validatePacketContent(packet) {
+            return // Silently drop packets with invalid content
         }
         
         let isBroadcastRecipient: Bool = {
@@ -242,7 +251,7 @@ public final class GossipSyncManager {
     private func sendPeriodicSync(for types: SyncTypeFlags) {
         // Unicast sync to connected peers to allow RSR attribution
         if let connectedPeers = delegate?.getConnectedPeers(), !connectedPeers.isEmpty {
-            SecureLogger.debug("Sending periodic sync to \(connectedPeers.count) connected peers", category: .sync)
+            BitLogger.debug("Sending periodic sync to \(connectedPeers.count) connected peers", category: .sync)
             for peerID in connectedPeers {
                 sendRequestSync(to: peerID, types: types)
             }
@@ -254,7 +263,7 @@ public final class GossipSyncManager {
 
     private func sendRequestSync(for types: SyncTypeFlags) {
         let payload = buildGcsPayload(for: types)
-        let pkt = BitchatPacket(
+        let pkt = BitPacket(
             type: MessageType.requestSync.rawValue,
             senderID: Data(hexString: myPeerID.id) ?? Data(),
             recipientID: nil, // broadcast
@@ -279,7 +288,7 @@ public final class GossipSyncManager {
             if let b = UInt8(hexByte, radix: 16) { recipient.append(b) }
             temp = String(temp.dropFirst(2))
         }
-        let pkt = BitchatPacket(
+        let pkt = BitPacket(
             type: MessageType.requestSync.rawValue,
             senderID: Data(hexString: myPeerID.id) ?? Data(),
             recipientID: recipient,
@@ -366,7 +375,7 @@ public final class GossipSyncManager {
         // Clamp GCS target FPR to configured min/max for security
         let clampedFpr = max(min(config.gcsTargetFpr, config.gcsMaxTargetFpr), config.gcsMinTargetFpr)
         
-        var candidates: [BitchatPacket] = []
+        var candidates: [BitPacket] = []
         if types.contains(.announce) {
             for (_, pair) in latestAnnouncementByPeer where isPacketFresh(pair.packet) {
                 candidates.append(pair.packet)
@@ -415,10 +424,10 @@ public final class GossipSyncManager {
     private func checkRateLimit(for peer: PeerID) -> Bool {
         let now = Date().timeIntervalSince1970
         var timestamps = packetRateTracker[peer] ?? []
-        // Remove timestamps older than 1 second
-        timestamps = timestamps.filter { now - $0 < 1.0 }
+        // Remove timestamps older than the rate limit window
+        timestamps = timestamps.filter { now - $0 < SecurityConfig.shared.rateLimitWindowSeconds }
         // Check if under limit
-        if Double(timestamps.count) < config.rateLimitPacketsPerSecond {
+        if Double(timestamps.count) < SecurityConfig.shared.rateLimitPacketsPerSecond {
             timestamps.append(now)
             packetRateTracker[peer] = timestamps
             return true
@@ -427,14 +436,84 @@ public final class GossipSyncManager {
         }
     }
 
-    private func validatePacketContent(_ packet: BitchatPacket) -> Bool {
-        // Basic validation: check for null bytes or suspicious patterns
-        let payload = packet.payload
-        if payload.contains(where: { $0 < 32 && $0 != 9 && $0 != 10 && $0 != 13 }) { // control chars except tab, lf, cr
+    private func validatePacketContent(_ packet: BitPacket) -> Bool {
+        // Check payload size limits
+        if packet.payload.count > SecurityConfig.shared.maxPayloadSizeBytes {
             return false
         }
-        // TODO: Add more sophisticated content validation as needed
+
+        // Check for forbidden payload patterns
+        for pattern in SecurityConfig.shared.forbiddenPayloadPatterns {
+            if packet.payload.range(of: pattern) != nil {
+                return false
+            }
+        }
+
+        // Basic validation: check for null bytes or suspicious patterns
+        if SecurityConfig.shared.enableContentValidation {
+            let payload = packet.payload
+            if payload.contains(where: { $0 < 32 && $0 != 9 && $0 != 10 && $0 != 13 }) { // control chars except tab, lf, cr
+                return false
+            }
+        }
+
         return true
+    }
+
+    private func validateTimestamp(_ packet: BitPacket) -> Bool {
+        let now = Date().timeIntervalSince1970
+        let packetTime = TimeInterval(packet.timestamp) / 1000.0 // Convert from milliseconds
+
+        // Check if timestamp is too far in the future
+        if packetTime > now + SecurityConfig.shared.timestampToleranceSeconds {
+            return false
+        }
+
+        // Check if message is too old
+        if packetTime < now - SecurityConfig.shared.maxMessageAgeSeconds {
+            return false
+        }
+
+        return true
+    }
+
+    private func validatePeerID(_ peerID: PeerID) -> Bool {
+        if !SecurityConfig.shared.enablePeerIDValidation {
+            return true
+        }
+
+        // Check if peer is in blocked list
+        if SecurityConfig.shared.blockedPeers.contains(peerID.id) {
+            return false
+        }
+
+        // Check if we require verified peers and peer is not in trusted list
+        if SecurityConfig.shared.requireVerifiedPeerID &&
+           !SecurityConfig.shared.trustedPeers.isEmpty &&
+           !SecurityConfig.shared.trustedPeers.contains(peerID.id) {
+            return false
+        }
+
+        return true
+    }
+
+    private func validateSignature(_ packet: BitPacket) -> Bool {
+        if !SecurityConfig.shared.enableSignatureVerification {
+            return true
+        }
+
+        // If signatures are required, packet must have a signature
+        if SecurityConfig.shared.requireSignatures && packet.signature == nil {
+            return false
+        }
+
+        // If packet has a signature, verify it
+        if packet.signature != nil {
+            return delegate?.verifyPacketSignature(packet) ?? false
+        }
+
+        // If signatures are not required and packet has no signature, allow it
+        return !SecurityConfig.shared.requireSignatures
     }
 
     // Periodic cleanup of expired messages and announcements

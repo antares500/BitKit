@@ -2,10 +2,10 @@ import BitLogger
 import Foundation
 import Network
 import Combine
-import Tor
-import BitchatCore
-import BitchatState
-import BitchatGeo
+import BitTor
+import BitCore
+import BitState
+import BitGeo
 
 /// Manages WebSocket connections to Nostr relays
 @MainActor
@@ -120,17 +120,17 @@ final class NostrRelayManager: ObservableObject {
                 let ready = await TorManager.shared.awaitReady()
                 await MainActor.run {
                     if !ready {
-                        SecureLogger.error("❌ Tor not ready; aborting relay connections (fail-closed)", category: .session)
+                        BitLogger.error("❌ Tor not ready; aborting relay connections (fail-closed)", category: .session)
                         return
                     }
-                    SecureLogger.debug("🌐 Connecting to \(self.relays.count) Nostr relays (via Tor)", category: .session)
+                    BitLogger.debug("🌐 Connecting to \(self.relays.count) Nostr relays (via Tor)", category: .session)
                     for relay in self.relays {
                         self.connectToRelay(relay.url)
                     }
                 }
             }
         } else {
-            SecureLogger.debug("🌐 Connecting to \(self.relays.count) Nostr relays (direct)", category: .session)
+            BitLogger.debug("🌐 Connecting to \(self.relays.count) Nostr relays (direct)", category: .session)
             for relay in self.relays {
                 connectToRelay(relay.url)
             }
@@ -188,7 +188,7 @@ final class NostrRelayManager: ObservableObject {
             }
             return
         }
-        let requestedRelays = relayUrls ?? Self.defaultRelays
+        let requestedRelays = relayUrls ?? Self.generalRelays
         let targetRelays = allowedRelayList(from: requestedRelays)
         guard !targetRelays.isEmpty else { return }
         ensureConnections(to: targetRelays)
@@ -285,14 +285,14 @@ final class NostrRelayManager: ObservableObject {
         do {
             let message = try encoder.encode(req)
             guard let messageString = String(data: message, encoding: .utf8) else { 
-                SecureLogger.error("❌ Failed to encode subscription request", category: .session)
+                BitLogger.error("❌ Failed to encode subscription request", category: .session)
                 return 
             }
             
-            // SecureLogger.debug("📋 Subscription filter JSON: \(messageString.prefix(200))...", category: .session)
+            // BitLogger.debug("📋 Subscription filter JSON: \(messageString.prefix(200))...", category: .session)
             
             // Target specific relays if provided; else default. Filter permanently failed relays.
-            let baseUrls = relayUrls ?? Self.defaultRelays
+            let baseUrls = relayUrls ?? Self.generalRelays
             let candidateUrls = baseUrls.filter { !isPermanentlyFailed($0) }
             let urls = allowedRelayList(from: candidateUrls)
             // Always queue subscriptions; sending happens when a relay reports connected
@@ -325,7 +325,7 @@ final class NostrRelayManager: ObservableObject {
                     eoseTrackers[id] = tracker
                 }
             }
-            SecureLogger.debug("📋 Queued subscription id=\(id) for \(urls.count) relay(s)", category: .session)
+            BitLogger.debug("📋 Queued subscription id=\(id) for \(urls.count) relay(s)", category: .session)
             // Ensure we actually have sockets opening to these relays so queued REQs can flush
             ensureConnections(to: urls)
             // If some targets are already connected, flush immediately for them
@@ -335,7 +335,7 @@ final class NostrRelayManager: ObservableObject {
                 }
             }
         } catch {
-            SecureLogger.error("❌ Failed to encode subscription request: \(error)", category: .session)
+            BitLogger.error("❌ Failed to encode subscription request: \(error)", category: .session)
         }
     }
 
@@ -345,15 +345,15 @@ final class NostrRelayManager: ObservableObject {
         allowDefaultRelays = shouldAllow
         if shouldAllow {
             var existing = Set(relays.map { $0.url })
-            for url in Self.defaultRelays where !existing.contains(url) {
+            for url in Self.generalRelays where !existing.contains(url) {
                 relays.append(Relay(url: url))
                 existing.insert(url)
             }
             if networkService.activationAllowed {
-                ensureConnections(to: Self.defaultRelays)
+                ensureConnections(to: Self.generalRelays)
             }
         } else {
-            for url in Self.defaultRelays {
+            for url in Self.generalRelays {
                 if let connection = connections[url] {
                     connection.cancel(with: .goingAway, reason: nil)
                 }
@@ -363,7 +363,7 @@ final class NostrRelayManager: ObservableObject {
             messageQueueLock.lock()
             for index in (0..<messageQueue.count).reversed() {
                 var item = messageQueue[index]
-                item.pendingRelays.subtract(Self.defaultRelaySet)
+                item.pendingRelays.subtract(Self.generalRelaySet)
                 if item.pendingRelays.isEmpty {
                     messageQueue.remove(at: index)
                 } else {
@@ -371,7 +371,7 @@ final class NostrRelayManager: ObservableObject {
                 }
             }
             messageQueueLock.unlock()
-            relays.removeAll { Self.defaultRelaySet.contains($0.url) }
+            relays.removeAll { Self.generalRelaySet.contains($0.url) }
             updateConnectionStatus()
         }
     }
@@ -380,7 +380,7 @@ final class NostrRelayManager: ObservableObject {
         var seen = Set<String>()
         var result: [String] = []
         for url in urls {
-            if !allowDefaultRelays && Self.defaultRelaySet.contains(url) { continue }
+            if !allowDefaultRelays && Self.generalRelaySet.contains(url) { continue }
             if seen.insert(url).inserted {
                 result.append(url)
             }
@@ -418,7 +418,7 @@ final class NostrRelayManager: ObservableObject {
         // Global network policy gate
         guard networkService.activationAllowed else { return }
         guard let url = URL(string: urlString) else { 
-            SecureLogger.warning("Invalid relay URL: \(urlString)", category: .session)
+            BitLogger.warning("Invalid relay URL: \(urlString)", category: .session)
             return 
         }
 
@@ -444,7 +444,7 @@ final class NostrRelayManager: ObservableObject {
                 let ready = await TorManager.shared.awaitReady()
                 await MainActor.run {
                     if ready { self.connectToRelay(urlString) }
-                    else { SecureLogger.error("❌ Tor not ready; skipping connection to \(urlString)", category: .session) }
+                    else { BitLogger.error("❌ Tor not ready; skipping connection to \(urlString)", category: .session) }
                 }
             }
             return
@@ -463,12 +463,12 @@ final class NostrRelayManager: ObservableObject {
         task.sendPing { [weak self] error in
             DispatchQueue.main.async {
                 if error == nil {
-                    SecureLogger.debug("✅ Connected to Nostr relay: \(urlString)", category: .session)
+                    BitLogger.debug("✅ Connected to Nostr relay: \(urlString)", category: .session)
                     self?.updateRelayStatus(urlString, isConnected: true)
                     // Flush any pending subscriptions for this relay
                     self?.flushPendingSubscriptions(for: urlString)
                 } else {
-                    SecureLogger.error("❌ Failed to connect to Nostr relay \(urlString): \(error?.localizedDescription ?? "Unknown error")", category: .session)
+                    BitLogger.error("❌ Failed to connect to Nostr relay \(urlString): \(error?.localizedDescription ?? "Unknown error")", category: .session)
                     self?.updateRelayStatus(urlString, isConnected: false, error: error)
                     // Trigger disconnection handler for proper backoff
                     self?.handleDisconnection(relayUrl: urlString, error: error ?? NSError(domain: "NostrRelay", code: -1, userInfo: nil))
@@ -485,7 +485,7 @@ final class NostrRelayManager: ObservableObject {
             if self.subscriptions[relayUrl]?.contains(id) == true { continue }
             connection.send(.string(messageString)) { error in
                 if let error = error {
-                    SecureLogger.error("❌ Failed to send pending subscription to \(relayUrl): \(error)", category: .session)
+                    BitLogger.error("❌ Failed to send pending subscription to \(relayUrl): \(error)", category: .session)
                 } else {
                     Task { @MainActor in
                         var subs = self.subscriptions[relayUrl] ?? Set<String>()
@@ -534,7 +534,7 @@ final class NostrRelayManager: ObservableObject {
         switch parsed {
         case .event(let subId, let event):
             if event.kind != 1059 {
-                SecureLogger.debug("📥 Event kind=\(event.kind) id=\(event.id.prefix(16))… relay=\(relayUrl)", category: .session)
+                BitLogger.debug("📥 Event kind=\(event.kind) id=\(event.id.prefix(16))… relay=\(relayUrl)", category: .session)
             }
             if let index = self.relays.firstIndex(where: { $0.url == relayUrl }) {
                 self.relays[index].messagesReceived += 1
@@ -542,7 +542,7 @@ final class NostrRelayManager: ObservableObject {
             if let handler = self.messageHandlers[subId] {
                 handler(event)
             } else {
-                SecureLogger.warning("⚠️ No handler for subscription \(subId)", category: .session)
+                BitLogger.warning("⚠️ No handler for subscription \(subId)", category: .session)
             }
         case .eose(let subId):
             if var tracker = eoseTrackers[subId] {
@@ -558,13 +558,13 @@ final class NostrRelayManager: ObservableObject {
         case .ok(let eventId, let success, let reason):
             if success {
                 _ = Self.pendingGiftWrapIDs.remove(eventId)
-                SecureLogger.debug("✅ Accepted id=\(eventId.prefix(16))… relay=\(relayUrl)", category: .session)
+                BitLogger.debug("✅ Accepted id=\(eventId.prefix(16))… relay=\(relayUrl)", category: .session)
             } else {
                 let isGiftWrap = Self.pendingGiftWrapIDs.remove(eventId) != nil
                 if isGiftWrap {
-                    SecureLogger.warning("📮 Rejected id=\(eventId.prefix(16))… reason=\(reason)", category: .session)
+                    BitLogger.warning("📮 Rejected id=\(eventId.prefix(16))… reason=\(reason)", category: .session)
                 } else {
-                    SecureLogger.error("📮 Rejected id=\(eventId.prefix(16))… reason=\(reason)", category: .session)
+                    BitLogger.error("📮 Rejected id=\(eventId.prefix(16))… reason=\(reason)", category: .session)
                 }
             }
         case .notice:
@@ -579,14 +579,14 @@ final class NostrRelayManager: ObservableObject {
             let data = try encoder.encode(req)
             let message = String(data: data, encoding: .utf8) ?? ""
             
-            SecureLogger.debug("📤 Send kind=\(event.kind) id=\(event.id.prefix(16))… relay=\(relayUrl)", category: .session)
+            BitLogger.debug("📤 Send kind=\(event.kind) id=\(event.id.prefix(16))… relay=\(relayUrl)", category: .session)
             
             connection.send(.string(message)) { [weak self] error in
                 DispatchQueue.main.async {
                     if let error = error {
-                        SecureLogger.error("❌ Failed to send event to \(relayUrl): \(error)", category: .session)
+                        BitLogger.error("❌ Failed to send event to \(relayUrl): \(error)", category: .session)
                     } else {
-                        // SecureLogger.debug("✅ Event sent to relay: \(relayUrl)", category: .session)
+                        // BitLogger.debug("✅ Event sent to relay: \(relayUrl)", category: .session)
                         // Update relay stats
                         if let index = self?.relays.firstIndex(where: { $0.url == relayUrl }) {
                             self?.relays[index].messagesSent += 1
@@ -595,7 +595,7 @@ final class NostrRelayManager: ObservableObject {
                 }
             }
         } catch {
-            SecureLogger.error("Failed to encode event: \(error)", category: .session)
+            BitLogger.error("Failed to encode event: \(error)", category: .session)
         }
     }
     
@@ -641,7 +641,7 @@ final class NostrRelayManager: ObservableObject {
            errorDescription.contains("dns") ||
            (ns.domain == NSURLErrorDomain && ns.code == NSURLErrorBadServerResponse) {
             if relays.first(where: { $0.url == relayUrl })?.lastError == nil {
-                SecureLogger.warning("Nostr relay permanent failure for \(relayUrl) - not retrying (code=\(ns.code))", category: .session)
+                BitLogger.warning("Nostr relay permanent failure for \(relayUrl) - not retrying (code=\(ns.code))", category: .session)
             }
             if let index = relays.firstIndex(where: { $0.url == relayUrl }) {
                 relays[index].lastError = error
@@ -659,7 +659,7 @@ final class NostrRelayManager: ObservableObject {
         
         // Stop attempting after max attempts
         if relays[index].reconnectAttempts >= maxReconnectAttempts {
-            SecureLogger.warning("Max reconnection attempts (\(maxReconnectAttempts)) reached for \(relayUrl)", category: .session)
+            BitLogger.warning("Max reconnection attempts (\(maxReconnectAttempts)) reached for \(relayUrl)", category: .session)
             return
         }
         
@@ -808,6 +808,19 @@ private extension URLSessionWebSocketTask.Message {
         @unknown default:       nil
         }
     }
+}
+
+// MARK: - Default Relays
+
+extension NostrRelayManager {
+    static let generalRelays: [String] = [
+        "wss://relay.damus.io",
+        "wss://nos.lol",
+        "wss://relay.snort.social",
+        "wss://relay.nostr.band"
+    ]
+    
+    static let generalRelaySet: Set<String> = Set(generalRelays)
 }
 
 // MARK: - Nostr Protocol Types

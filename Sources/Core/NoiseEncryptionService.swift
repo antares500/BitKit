@@ -35,7 +35,7 @@ public class NoiseEncryptionService {
         // Clear ephemeral state
     }
     
-    public func signPacket(_ packet: BitchatPacket) -> BitchatPacket? {
+    public func signPacket(_ packet: BitPacket) -> BitPacket? {
         // Stub implementation - should sign the packet
         return packet
     }
@@ -91,7 +91,7 @@ public class NoiseEncryptionService {
         return nil
     }
 
-    public func verifyPacketSignature(_ packet: BitchatPacket, publicKey: Data) -> Bool {
+    public func verifyPacketSignature(_ packet: BitPacket, publicKey: Data) -> Bool {
         // Stub - verify packet signature
         return false
     }

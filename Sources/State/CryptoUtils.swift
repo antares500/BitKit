@@ -1,6 +1,6 @@
 import Foundation
 import CryptoKit
-import BitchatCore
+import BitCore
 
 public enum CryptoUtils {
     public static func generateFingerprint() throws -> String {

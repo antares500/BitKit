@@ -2,7 +2,7 @@
 
 ## Descripción
 
-Este ejemplo avanzado demuestra cómo combinar múltiples características de BitchatCommunications para crear una aplicación de mensajería completa y personalizada. Incluye encriptación avanzada, gestión de estado distribuido, transferencias de archivos, y un sistema de plugins extensible. Esta configuración muestra cómo construir una aplicación robusta que puede escalar desde comunicaciones locales hasta redes globales.
+Este ejemplo avanzado demuestra cómo combinar múltiples características de BitCommunications para crear una aplicación de mensajería completa y personalizada. Incluye encriptación avanzada, gestión de estado distribuido, transferencias de archivos, y un sistema de plugins extensible. Esta configuración muestra cómo construir una aplicación robusta que puede escalar desde comunicaciones locales hasta redes globales.
 
 **Beneficios:**
 - Arquitectura modular que permite añadir características sin refactorización masiva
@@ -24,24 +24,24 @@ Este ejemplo avanzado demuestra cómo combinar múltiples características de Bi
 
 1. **Completar Configuración Básica** (Ejemplo 01)
 2. **Configurar BLE Mesh** (Ejemplo 02)
-3. **Añadir todas las dependencias**: BitchatNostr, BitchatGeo, BitchatState, BitchatFiles
+3. **Añadir todas las dependencias**: BitNostr, BitGeo, BitState, BitFiles
 4. **Implementar AdvancedCryptoManager** para encriptación avanzada
 5. **Configurar PluginArchitecture** para extensibilidad
 
 ## Código de Implementación
 
 ```swift
-import BitchatCore
-import BitchatBLE
-import BitchatNostr
-import BitchatGeo
-import BitchatState
-import BitchatFiles
+import BitCore
+import BitBLE
+import BitNostr
+import BitGeo
+import BitState
+import BitFiles
 import Combine
 import CryptoKit
 
 // Arquitectura principal de la aplicación avanzada
-class AdvancedBitchatApp {
+class AdvancedBitApp {
     // Componentes principales
     private let cryptoManager: AdvancedCryptoManager
     private let stateManager: DistributedStateManager

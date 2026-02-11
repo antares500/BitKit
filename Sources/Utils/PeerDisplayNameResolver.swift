@@ -1,6 +1,6 @@
 // PeerDisplayNameResolver.swift
 import Foundation
-import BitchatCore
+import BitCore
 
 public enum PeerDisplayNameResolver {
     public static func resolve(_ tuples: [(PeerID, String?)], selfNickname: String) -> [PeerID: String] {

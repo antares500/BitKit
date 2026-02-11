@@ -1,7 +1,7 @@
 import BitLogger
 import Foundation
 import Combine
-import BitchatCore
+import BitCore
 
 #if os(iOS) || os(macOS)
 import CoreLocation
@@ -54,6 +54,12 @@ public final class LocationStateManager: NSObject, CLLocationManagerDelegate, Ob
 
     @Published private(set) var bookmarks: [String] = []
     @Published private(set) var bookmarkNames: [String: String] = [:]
+
+    // MARK: - Public Location Access
+
+    public var currentLocation: CLLocation? {
+        lastLocation
+    }
 
     // MARK: - Private State
 
@@ -309,7 +315,7 @@ public final class LocationStateManager: NSObject, CLLocationManagerDelegate, Ob
     }
 
     public func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
-        SecureLogger.error("LocationStateManager: location error: \(error.localizedDescription)", category: .session)
+        BitLogger.error("LocationStateManager: location error: \(error.localizedDescription)", category: .session)
     }
 
     // MARK: - Private Helpers (Permission)

@@ -1,5 +1,5 @@
 //
-// BitchatDelegate.swift
+// BitDelegate.swift
 // bitchat
 //
 // This is free and unencumbered software released into the public domain.
@@ -13,8 +13,8 @@ import CoreBluetooth
 #endif
 
 /// Delegate protocol for receiving Bitchat events
-public protocol BitchatDelegate: AnyObject {
-    func didReceiveMessage(_ message: BitchatMessage)
+public protocol BitDelegate: AnyObject {
+    func didReceiveMessage(_ message: BitMessage)
     func didConnectToPeer(_ peerID: PeerID)
     func didDisconnectFromPeer(_ peerID: PeerID)
     func didUpdatePeerList(_ peers: [PeerID])
@@ -33,7 +33,7 @@ public protocol BitchatDelegate: AnyObject {
 }
 
 // Provide default implementation to make it effectively optional
-public extension BitchatDelegate {
+public extension BitDelegate {
     func isFavorite(fingerprint: String) -> Bool {
         return false
     }

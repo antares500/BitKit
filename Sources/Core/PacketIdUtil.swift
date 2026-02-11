@@ -4,7 +4,7 @@ import CryptoKit
 // Deterministic packet ID used for gossip sync membership
 // ID = first 16 bytes of SHA-256 over: [type | senderID | timestamp | payload]
 public enum PacketIdUtil {
-    public static func computeId(_ packet: BitchatPacket) -> Data {
+    public static func computeId(_ packet: BitPacket) -> Data {
         var hasher = SHA256()
         hasher.update(data: Data([packet.type]))
         hasher.update(data: packet.senderID)

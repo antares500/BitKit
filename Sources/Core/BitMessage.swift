@@ -1,5 +1,5 @@
 //
-// BitchatMessage.swift
+// BitMessage.swift
 // bitchat
 //
 // This is free and unencumbered software released into the public domain.
@@ -12,7 +12,7 @@ import Foundation
 /// Handles both broadcast messages and private encrypted messages,
 /// with support for mentions, replies, and delivery tracking.
 /// - Note: This is the primary data model for chat messages
-public final class BitchatMessage: Codable {
+public final class BitMessage: Codable {
     public let id: String
     public let sender: String
     public let content: String
@@ -71,8 +71,8 @@ public final class BitchatMessage: Codable {
 
 // MARK: - Equatable Conformance
 
-extension BitchatMessage: Equatable {
-    public static func == (lhs: BitchatMessage, rhs: BitchatMessage) -> Bool {
+extension BitMessage: Equatable {
+    public static func == (lhs: BitMessage, rhs: BitMessage) -> Bool {
         return lhs.id == rhs.id &&
                lhs.sender == rhs.sender &&
                lhs.content == rhs.content &&
@@ -89,7 +89,7 @@ extension BitchatMessage: Equatable {
 
 // MARK: - Binary encoding
 
-extension BitchatMessage {
+extension BitMessage {
     func toBinaryPayload() -> Data? {
         var data = Data()
         
@@ -322,7 +322,7 @@ extension BitchatMessage {
 
 // MARK: - Helpers
 
-extension BitchatMessage {
+extension BitMessage {
     
     private static let timestampFormatter: DateFormatter = {
         let formatter = DateFormatter()
@@ -335,7 +335,7 @@ extension BitchatMessage {
     }
 }
 
-extension Array where Element == BitchatMessage {
+extension Array where Element == BitMessage {
     /// Filters out empty ones and deduplicate by ID while preserving order (from oldest to newest)
     func cleanedAndDeduped() -> [Element] {
         let arr = filter { $0.content.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false }
@@ -343,7 +343,7 @@ extension Array where Element == BitchatMessage {
             return arr
         }
         var seen = Set<String>()
-        var dedup: [BitchatMessage] = []
+        var dedup: [BitMessage] = []
         for m in arr.sorted(by: { $0.timestamp < $1.timestamp }) {
             if !seen.contains(m.id) {
                 dedup.append(m)

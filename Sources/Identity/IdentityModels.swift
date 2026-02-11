@@ -7,7 +7,7 @@
 //
 
 import Foundation
-import BitchatCore
+import BitCore
 
 // MARK: - Three-Layer Identity Model
 

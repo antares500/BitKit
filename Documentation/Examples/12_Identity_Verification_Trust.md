@@ -2,7 +2,7 @@
 
 ## Descripción
 
-Este ejemplo demuestra cómo implementar un sistema completo de verificación de identidades y gestión de confianza en BitchatCommunications. Aprenderás a crear y verificar identidades criptográficas, gestionar niveles de confianza, implementar attestations distribuidas, y construir una red de confianza que resista ataques Sybil y mantenga la privacidad.
+Este ejemplo demuestra cómo implementar un sistema completo de verificación de identidades y gestión de confianza en BitCommunications. Aprenderás a crear y verificar identidades criptográficas, gestionar niveles de confianza, implementar attestations distribuidas, y construir una red de confianza que resista ataques Sybil y mantenga la privacidad.
 
 **Beneficios:**
 - Verificación criptográfica de identidades sin autoridad central
@@ -33,8 +33,8 @@ Este ejemplo demuestra cómo implementar un sistema completo de verificación de
 ## Código de Implementación
 
 ```swift
-import BitchatCore
-import BitchatNostr
+import BitCore
+import BitNostr
 import CryptoKit
 import Security
 import Combine
@@ -792,15 +792,14 @@ class TrustViewController: UIViewController {
 
         Task {
             do {
-                // En la práctica, recibiríamos el proof del peer
-                let mockProof = IdentityProof(
-                    identity: Identity(peerID: peerID, displayName: "Peer", publicKey: P256.Signing.PublicKey(), additionalInfo: [:], createdAt: Date()),
-                    proofOfWork: ProofOfWork(challenge: Data(), nonce: 0, difficulty: .standard),
-                    timestamp: Date(),
-                    signature: Data()
-                )
+                // Recibir el proof del peer a través del sistema de mensajería
+                // En una implementación real, el proof se recibiría como parte del handshake o mensaje
+                guard let receivedProof = await receiveIdentityProofFromPeer(peerID) else {
+                    showError("No se recibió proof de identidad del peer")
+                    return
+                }
 
-                let result = try await trustManager.verifyPeerIdentity(peerID, proof: mockProof)
+                let result = try await trustManager.verifyPeerIdentity(peerID, proof: receivedProof)
 
                 switch result {
                 case .success(let trustLevel):
@@ -865,6 +864,14 @@ class TrustViewController: UIViewController {
         let alert = UIAlertController(title: "Error", message: message, preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: "OK", style: .default))
         present(alert, animated: true)
+    }
+
+    // Función para recibir proof de identidad de un peer (implementación real)
+    private func receiveIdentityProofFromPeer(_ peerID: PeerID) async -> IdentityProof? {
+        // En una implementación real, esto esperaría un mensaje del peer con el proof
+        // Por ejemplo, suscribirse a mensajes de tipo "identity_proof"
+        // Aquí simulamos recepción (reemplazar con lógica real)
+        return nil // Placeholder: implementar recepción real
     }
 }
 

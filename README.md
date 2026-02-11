@@ -1,4 +1,7 @@
-# bitchatKit
+![bitKit Icon](bitkit.svg)
+
+
+# bitKit
 Comunicaciones P2P seguras y privadas para la era moderna.
 
 Paquete Swift modular para comunicaciones P2P seguras, privadas y resistentes a la censura. Proporciona una arquitectura completa de mensajería peer-to-peer con soporte para Bluetooth Low Energy (BLE), Nostr relays globales, geolocalización.
@@ -24,7 +27,7 @@ Añade a tu `Package.swift`:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/antares500/bitchatKit.git", from: "1.0.0")
+    .package(url: "https://github.com/antares500/bitKit.git", from: "1.0.0")
 ]
 ```
 
@@ -33,16 +36,16 @@ Elige los targets según tus necesidades:
 ```swift
 targets: [
     .target(name: "MiApp", dependencies: [
-        "BitchatCore",           // Núcleo requerido
-        "BitchatBLE",            // BLE mesh offline
-        "BitchatNostr",          // Nostr relays globales
-        "BitchatGeo",            // Geolocalización
-        "BitchatState",          // Persistencia segura
-        "BitchatMedia",          // Multimedia
-        "BitchatTor",            // Anonimato (opcional)
-        "BitchatCommunications", // Coordinación de transportes
-        "BitchatGroup",          // Grupos y moderación
-        "BitchatAnalytics"       // Analytics (opcional)
+        "BitCore",           // Núcleo requerido
+        "BitBLE",            // BLE mesh offline
+        "BitNostr",          // Nostr relays globales
+        "BitGeo",            // Geolocalización
+        "BitState",          // Persistencia segura
+        "BitMedia",          // Multimedia
+        "BitTor",            // Anonimato (opcional)
+        "BitCommunications", // Coordinación de transportes
+        "BitGroup",          // Grupos y moderación
+        "BitAnalytics"       // Analytics (opcional)
     ])
 ]
 ```
@@ -50,48 +53,48 @@ targets: [
 ## Arquitectura
 
 ```
-bitchatKit
-├── BitchatCore          # Núcleo: protocolos, encriptación, utilidades
-├── BitchatBLE           # Transporte BLE mesh offline
-├── BitchatNostr         # Transporte Nostr relays globales
-├── BitchatGeo           # Geolocalización y canales geo
-├── BitchatState         # Persistencia segura (Keychain)
-├── BitchatMedia         # Manejo de multimedia
-├── BitchatTor           # Anonimato con Tor
-├── BitchatCommunications # Coordinación de transportes
-├── BitchatGroup         # Gestión de grupos y moderación
-└── BitchatAnalytics     # Analytics y métricas de comunidad
+bitKit
+├── BitCore          # Núcleo: protocolos, encriptación, utilidades
+├── BitBLE           # Transporte BLE mesh offline
+├── BitNostr         # Transporte Nostr relays globales
+├── BitGeo           # Geolocalización y canales geo
+├── BitState         # Persistencia segura (Keychain)
+├── BitMedia         # Manejo de multimedia
+├── BitTor           # Anonimato con Tor
+├── BitCommunications # Coordinación de transportes
+├── BitGroup         # Gestión de grupos y moderación
+└── BitAnalytics     # Analytics y métricas de comunidad
 ```
 
 ## Configuración de Redes
 
-bitchatKit permite crear **tu propia red** o **incluirte en la red bitchat** existente. Ambas opciones son compatibles con la última versión de bitchat si el usuario lo necesita.
+bitKit permite crear **tu propia red** o **incluirte en la red bitchat** existente. Ambas opciones son compatibles con la última versión de bitchat si el usuario lo necesita.
 
 ### Mi Propia Red
 - Configura aislamiento usando relays Nostr específicos o firmas de app personalizadas.
 - Los mensajes se firman con claves únicas, asegurando que solo apps autorizadas los procesen.
 - **Aviso**: Debes cumplir con los estándares de la red original marcados por Jack Dorsey y adaptarte a sus actualizaciones. bitchat no leerá mensajes de redes propias sin configuración explícita.
 
-### Incluirme en la Red Bitchat
+### Incluirme en la Red Bit
 - Usa las mismas APIs y dependencias que bitchat para interoperabilidad completa.
-- bitchatKit se alinea con la última versión de bitchat, permitiendo inclusión en su red mediante configuración compartida (ej. relays públicos o claves compatibles).
+- bitKit se alinea con la última versión de bitchat, permitiendo inclusión en su red mediante configuración compartida (ej. relays públicos o claves compatibles).
 
 Ejemplo de configuración para compatibilidad:
 ```swift
 // Para red propia: configura relays y firmas personalizadas
-let communications = BitchatCommunications(
+let communications = BitCommunications(
     customRelays: ["tu-relay.nostr"], 
     appSignature: "tu-firma-unica"
 )
 
 // Para incluirte en bitchat: usa configuración por defecto compatible
-let communications = BitchatCommunications()  // Usa relays y firmas de bitchat
+let communications = BitCommunications()  // Usa relays y firmas de bitchat
 ```
 
 ### Configuración Básica
 
-Para comenzar con bitchatKit, sigue nuestro [Ejemplo 01: Configuración Básica](Documentation/Examples/01_Basic_Configuration.md) que cubre:
-- Implementación de protocolos requeridos (KeychainManagerProtocol, BitchatDelegate)
+Para comenzar con bitKit, sigue nuestro [Ejemplo 01: Configuración Básica](Documentation/Examples/01_Basic_Configuration.md) que cubre:
+- Implementación de protocolos requeridos (KeychainManagerProtocol, BitDelegate)
 - Configuración inicial de servicios
 - Manejo de eventos básicos
 
@@ -153,9 +156,9 @@ Este proyecto está bajo la licencia Unlicense. Ver [UNLICENSE](UNLICENSE) para 
 
 ## Soporte
 
-- **Issues**: [GitHub Issues](https://github.com/antares500/bitchatKit/issues)
-- **Discusiones**: [GitHub Discussions](https://github.com/antares500/bitchatKit/discussions)
+- **Issues**: [GitHub Issues](https://github.com/antares500/bitKit/issues)
+- **Discusiones**: [GitHub Discussions](https://github.com/antares500/bitKit/discussions)
 
 ---
 
-**bitchatKit** - Comunicaciones P2P seguras y privadas para la era moderna.
+**bitKit** - Comunicaciones P2P seguras y privadas para la era moderna.

@@ -28,13 +28,27 @@ public enum GCSFilter {
     }
 
     public static func buildFilter(ids: [Data], maxBytes: Int, targetFpr: Double) -> Params {
+        // Security validation: check parameters
+        guard maxBytes > 0 && maxBytes <= 1024 * 1024 else { // Max 1MB
+            return Params(p: 1, m: 1, data: Data())
+        }
+        guard targetFpr >= 0.000001 && targetFpr <= 0.25 else {
+            return Params(p: 1, m: 1, data: Data())
+        }
+
         let p = deriveP(targetFpr: targetFpr)
         guard !ids.isEmpty else {
             return Params(p: p, m: 1, data: Data())
         }
 
+        // Validate IDs are correct size (16 bytes for packet IDs)
+        let validIds = ids.filter { $0.count == 16 }
+        guard !validIds.isEmpty else {
+            return Params(p: p, m: 1, data: Data())
+        }
+
         let cap = estimateMaxElements(sizeBytes: maxBytes, p: p)
-        let selected = Array(ids.prefix(cap))
+        let selected = Array(validIds.prefix(cap))
         let range = max(1, hashRange(count: selected.count, p: p))
         let modulo = UInt64(range)
 

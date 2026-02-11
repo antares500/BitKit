@@ -2,7 +2,7 @@
 
 ## Descripción
 
-Este ejemplo muestra cómo implementar un sistema completo de gestión de estado persistente en BitchatCommunications, incluyendo identidades criptográficas, backup/restore, migración entre dispositivos y sincronización de estado. Aprenderás a manejar la persistencia segura de todas las identidades, configuraciones y datos de aplicación de manera que sobreviva reinicios, actualizaciones y cambios de dispositivo.
+Este ejemplo muestra cómo implementar un sistema completo de gestión de estado persistente en BitCommunications, incluyendo identidades criptográficas, backup/restore, migración entre dispositivos y sincronización de estado. Aprenderás a manejar la persistencia segura de todas las identidades, configuraciones y datos de aplicación de manera que sobreviva reinicios, actualizaciones y cambios de dispositivo.
 
 **Beneficios:**
 - Persistencia completa de identidades y configuraciones
@@ -21,15 +21,15 @@ Este ejemplo muestra cómo implementar un sistema completo de gestión de estado
 ## Pasos Previos Obligatorios
 
 1. **Completar Configuración Básica** (Ejemplo 01)
-2. **Añadir BitchatState** a las dependencias del proyecto
+2. **Añadir BitState** a las dependencias del proyecto
 3. **Implementar SecureIdentityStateManager** con keychain completo
 4. **Configurar permisos** para acceso al keychain
 
 ## Código de Implementación
 
 ```swift
-import BitchatCore
-import BitchatState
+import BitCore
+import BitState
 import Security
 import Combine
 

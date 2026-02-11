@@ -2,7 +2,7 @@
 
 ## Descripción
 
-Este ejemplo muestra cómo configurar los componentes básicos de bitchatKit para una aplicación de mensajería P2P. Aprenderás a implementar los protocolos requeridos, configurar la persistencia segura y manejar eventos de comunicación. Esta configuración proporciona una base sólida para cualquier aplicación que necesite comunicación peer-to-peer segura.
+Este ejemplo muestra cómo configurar los componentes básicos de bitKit para una aplicación de mensajería P2P. Aprenderás a implementar los protocolos requeridos, configurar la persistencia segura y manejar eventos de comunicación. Esta configuración proporciona una base sólida para cualquier aplicación que necesite comunicación peer-to-peer segura.
 
 **Beneficios:**
 - Establece una arquitectura modular que facilita la adición de transportes adicionales
@@ -18,15 +18,15 @@ Este ejemplo muestra cómo configurar los componentes básicos de bitchatKit par
 
 1. **Instalar el paquete** siguiendo las instrucciones de instalación en el README principal
 2. **Implementar KeychainManagerProtocol** para persistencia segura de claves
-3. **Crear una clase delegate** que conforme a BitchatDelegate
+3. **Crear una clase delegate** que conforme a BitDelegate
 4. **Configurar permisos** en Info.plist para Bluetooth y ubicación si usas esos transportes
 
 ## Código de Implementación
 
 ```swift
-import BitchatCore
-import BitchatBLE
-import BitchatState
+import BitCore
+import BitBLE
+import BitState
 
 // Paso 1: Implementar KeychainManagerProtocol para persistencia segura
 // Esta implementación básica usa UserDefaults - para producción usa Keychain real
@@ -64,10 +64,10 @@ class MiKeychain: KeychainManagerProtocol {
     }
 }
 
-// Paso 2: Implementar BitchatDelegate para manejar eventos
-class MiDelegate: BitchatDelegate {
+// Paso 2: Implementar BitDelegate para manejar eventos
+class MiDelegate: BitDelegate {
     // Se llama cuando se recibe un mensaje de chat
-    func didReceiveMessage(_ message: BitchatMessage) {
+    func didReceiveMessage(_ message: BitMessage) {
         print("Mensaje recibido: \(message.content)")
         // Aquí actualizarías tu UI o guardarías en base de datos
     }
@@ -115,7 +115,7 @@ class MiAppController {
     private let delegate = MiDelegate()
     private var bleService: BLEService?
 
-    func configurarBitchat() {
+    func configurarBit() {
         // Configurar identidad segura usando el keychain
         let identityManager = SecureIdentityStateManager(keychain: keychain)
 
@@ -150,7 +150,7 @@ class MiAppController {
         // Iniciar servicios BLE
         bleService?.startServices()
 
-        print("bitchatKit configurado y listo")
+        print("bitKit configurado y listo")
     }
 
     private func loadRelaysFromCSV() -> [Relay] {
@@ -161,7 +161,7 @@ class MiAppController {
 
     func enviarMensaje() {
         // Enviar mensaje público a todos los peers conectados
-        bleService?.sendMessage("¡Hola desde Bitchat!", mentions: [])
+        bleService?.sendMessage("¡Hola desde Bit!", mentions: [])
     }
 
     func detenerServicios() {
@@ -174,7 +174,7 @@ class MiAppController {
 ## Notas Adicionales
 
 - Esta configuración básica proporciona comunicación BLE mesh offline
-- Para comunicación global, añade BitchatNostr en el siguiente ejemplo
+- Para comunicación global, añade BitNostr en el siguiente ejemplo
 - Asegúrate de manejar el ciclo de vida de los servicios (start/stop) apropiadamente
 - Los mensajes se encriptan automáticamente usando el protocolo Noise
 

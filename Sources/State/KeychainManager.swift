@@ -1,5 +1,5 @@
 import Foundation
-import BitchatCore
+import BitCore
 
 public class KeychainManager: KeychainManagerProtocol {
     // Stub implementation for the package

@@ -93,7 +93,7 @@
 import BitLogger
 import Foundation
 import CryptoKit
-import BitchatCore
+import BitCore
 
 protocol SecureIdentityStateManagerProtocol {
     // MARK: Secure Loading/Saving
@@ -168,7 +168,7 @@ final class SecureIdentityStateManager: SecureIdentityStateManagerProtocol {
         // Try to load from keychain
         if let keyData = keychain.getIdentityKey(forKey: encryptionKeyName) {
             loadedKey = SymmetricKey(data: keyData)
-            SecureLogger.logKeyOperation(.load, keyType: "identity cache encryption key", success: true)
+            BitLogger.logKeyOperation(.load, keyType: "identity cache encryption key", success: true)
         }
         // Generate new key if needed
         else {
@@ -176,7 +176,7 @@ final class SecureIdentityStateManager: SecureIdentityStateManagerProtocol {
             let keyData = loadedKey.withUnsafeBytes { Data($0) }
             // Save to keychain
             let saved = keychain.saveIdentityKey(keyData, forKey: encryptionKeyName)
-            SecureLogger.logKeyOperation(.generate, keyType: "identity cache encryption key", success: saved)
+            BitLogger.logKeyOperation(.generate, keyType: "identity cache encryption key", success: saved)
         }
         
         self.encryptionKey = loadedKey
@@ -203,7 +203,7 @@ final class SecureIdentityStateManager: SecureIdentityStateManagerProtocol {
             cache = try JSONDecoder().decode(IdentityCache.self, from: decryptedData)
         } catch {
             // Log error but continue with empty cache
-            SecureLogger.error(error, context: "Failed to load identity cache", category: .security)
+            BitLogger.error(error, context: "Failed to load identity cache", category: .security)
         }
     }
     
@@ -229,10 +229,10 @@ final class SecureIdentityStateManager: SecureIdentityStateManagerProtocol {
             let sealedBox = try AES.GCM.seal(data, using: encryptionKey)
             let saved = keychain.saveIdentityKey(sealedBox.combined!, forKey: cacheKey)
             if saved {
-                SecureLogger.debug("Identity cache saved to keychain", category: .security)
+                BitLogger.debug("Identity cache saved to keychain", category: .security)
             }
         } catch {
-            SecureLogger.error(error, context: "Failed to save identity cache", category: .security)
+            BitLogger.error(error, context: "Failed to save identity cache", category: .security)
         }
     }
     
@@ -404,7 +404,7 @@ final class SecureIdentityStateManager: SecureIdentityStateManagerProtocol {
     }
     
     func setBlocked(_ fingerprint: String, isBlocked: Bool) {
-        SecureLogger.info("User \(isBlocked ? "blocked" : "unblocked"): \(fingerprint)", category: .security)
+        BitLogger.info("User \(isBlocked ? "blocked" : "unblocked"): \(fingerprint)", category: .security)
         
         queue.async(flags: .barrier) {
             if var identity = self.cache.socialIdentities[fingerprint] {
@@ -481,7 +481,7 @@ final class SecureIdentityStateManager: SecureIdentityStateManagerProtocol {
     // MARK: - Cleanup
     
     func clearAllIdentityData() {
-        SecureLogger.warning("Clearing all identity data", category: .security)
+        BitLogger.warning("Clearing all identity data", category: .security)
         
         queue.async(flags: .barrier) {
             self.cache = IdentityCache()
@@ -490,7 +490,7 @@ final class SecureIdentityStateManager: SecureIdentityStateManagerProtocol {
             
             // Delete from keychain
             let deleted = self.keychain.deleteIdentityKey(forKey: self.cacheKey)
-            SecureLogger.logKeyOperation(.delete, keyType: "identity cache", success: deleted)
+            BitLogger.logKeyOperation(.delete, keyType: "identity cache", success: deleted)
         }
     }
     
@@ -503,7 +503,7 @@ final class SecureIdentityStateManager: SecureIdentityStateManagerProtocol {
     // MARK: - Verification
     
     func setVerified(fingerprint: String, verified: Bool) {
-        SecureLogger.info("Fingerprint \(verified ? "verified" : "unverified"): \(fingerprint)", category: .security)
+        BitLogger.info("Fingerprint \(verified ? "verified" : "unverified"): \(fingerprint)", category: .security)
         
         queue.async(flags: .barrier) {
             if verified {

@@ -1,6 +1,6 @@
 import BitLogger
 import Foundation
-import BitchatCore
+import BitCore
 
 /// Routes messages using available transports (Mesh, Nostr, etc.)
 @MainActor
@@ -25,7 +25,7 @@ public final class MessageRouter {
         self.transports = transports
 
         // Observe favorites changes to learn Nostr mapping and flush queued messages
-        // NotificationCenter.default.addObserver(
+        // NotificationCenter.general.addObserver(
         //     forName: .favoriteStatusChanged,
         //     object: nil,
         //     queue: .main
@@ -62,7 +62,7 @@ public final class MessageRouter {
 
 public func sendPrivate(_ content: String, to peerID: PeerID, recipientNickname: String, messageID: String) {
         if let transport = reachableTransport(for: peerID) {
-            SecureLogger.debug("Routing PM via \(type(of: transport)) to \(peerID.id.prefix(8))… id=\(messageID.prefix(8))…", category: .session)
+            BitLogger.debug("Routing PM via \(type(of: transport)) to \(peerID.id.prefix(8))… id=\(messageID.prefix(8))…", category: .session)
             transport.sendPrivateMessage(content, to: peerID, recipientNickname: recipientNickname, messageID: messageID)
         } else {
             // Queue for later with timestamp for TTL tracking
@@ -74,25 +74,25 @@ public func sendPrivate(_ content: String, to peerID: PeerID, recipientNickname:
             // Enforce per-peer size limit with FIFO eviction
             if let count = outbox[peerID]?.count, count > Self.maxMessagesPerPeer {
                 let evicted = outbox[peerID]?.removeFirst()
-                SecureLogger.warning("📤 Outbox overflow for \(peerID.id.prefix(8))… - evicted oldest message: \(evicted?.messageID.prefix(8) ?? "?")…", category: .session)
+                BitLogger.warning("📤 Outbox overflow for \(peerID.id.prefix(8))… - evicted oldest message: \(evicted?.messageID.prefix(8) ?? "?")…", category: .session)
             }
 
-            SecureLogger.debug("Queued PM for \(peerID.id.prefix(8))… (no reachable transport) id=\(messageID.prefix(8))… queue=\(outbox[peerID]?.count ?? 0)", category: .session)
+            BitLogger.debug("Queued PM for \(peerID.id.prefix(8))… (no reachable transport) id=\(messageID.prefix(8))… queue=\(outbox[peerID]?.count ?? 0)", category: .session)
         }
     }
 
     func sendReadReceipt(_ receipt: ReadReceipt, to peerID: PeerID) {
         if let transport = reachableTransport(for: peerID) {
-            SecureLogger.debug("Routing READ ack via \(type(of: transport)) to \(peerID.id.prefix(8))… id=\(receipt.originalMessageID.prefix(8))…", category: .session)
+            BitLogger.debug("Routing READ ack via \(type(of: transport)) to \(peerID.id.prefix(8))… id=\(receipt.originalMessageID.prefix(8))…", category: .session)
             transport.sendReadReceipt(receipt, to: peerID)
         } else if !transports.isEmpty {
-            SecureLogger.debug("No reachable transport for READ ack to \(peerID.id.prefix(8))…", category: .session)
+            BitLogger.debug("No reachable transport for READ ack to \(peerID.id.prefix(8))…", category: .session)
         }
     }
 
     func sendDeliveryAck(_ messageID: String, to peerID: PeerID) {
         if let transport = reachableTransport(for: peerID) {
-            SecureLogger.debug("Routing DELIVERED ack via \(type(of: transport)) to \(peerID.id.prefix(8))… id=\(messageID.prefix(8))…", category: .session)
+            BitLogger.debug("Routing DELIVERED ack via \(type(of: transport)) to \(peerID.id.prefix(8))… id=\(messageID.prefix(8))…", category: .session)
             transport.sendDeliveryAck(for: messageID, to: peerID)
         }
     }
@@ -109,7 +109,7 @@ public func sendPrivate(_ content: String, to peerID: PeerID, recipientNickname:
 
     func flushOutbox(for peerID: PeerID) {
         guard let queued = outbox[peerID], !queued.isEmpty else { return }
-        SecureLogger.debug("Flushing outbox for \(peerID.id.prefix(8))… count=\(queued.count)", category: .session)
+        BitLogger.debug("Flushing outbox for \(peerID.id.prefix(8))… count=\(queued.count)", category: .session)
 
         let now = Date()
         var remaining: [QueuedMessage] = []
@@ -117,12 +117,12 @@ public func sendPrivate(_ content: String, to peerID: PeerID, recipientNickname:
         for message in queued {
             // Skip expired messages (TTL exceeded)
             if now.timeIntervalSince(message.timestamp) > Self.messageTTLSeconds {
-                SecureLogger.debug("⏰ Expired queued message for \(peerID.id.prefix(8))… id=\(message.messageID.prefix(8))… (age: \(Int(now.timeIntervalSince(message.timestamp)))s)", category: .session)
+                BitLogger.debug("⏰ Expired queued message for \(peerID.id.prefix(8))… id=\(message.messageID.prefix(8))… (age: \(Int(now.timeIntervalSince(message.timestamp)))s)", category: .session)
                 continue
             }
 
             if let transport = reachableTransport(for: peerID) {
-                SecureLogger.debug("Outbox -> \(type(of: transport)) for \(peerID.id.prefix(8))… id=\(message.messageID.prefix(8))…", category: .session)
+                BitLogger.debug("Outbox -> \(type(of: transport)) for \(peerID.id.prefix(8))… id=\(message.messageID.prefix(8))…", category: .session)
                 transport.sendPrivateMessage(message.content, to: peerID, recipientNickname: message.nickname, messageID: message.messageID)
             } else {
                 remaining.append(message)

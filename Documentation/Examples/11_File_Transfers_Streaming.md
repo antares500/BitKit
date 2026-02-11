@@ -2,7 +2,7 @@
 
 ## Descripción
 
-Este ejemplo muestra cómo implementar transferencias de archivos robustas y streaming de medios en tiempo real dentro de BitchatCommunications. Aprenderás a manejar archivos grandes con recuperación de errores, streaming adaptativo, compresión inteligente, y protocolos de transferencia optimizados para diferentes tipos de contenido y condiciones de red.
+Este ejemplo muestra cómo implementar transferencias de archivos robustas y streaming de medios en tiempo real dentro de BitCommunications. Aprenderás a manejar archivos grandes con recuperación de errores, streaming adaptativo, compresión inteligente, y protocolos de transferencia optimizados para diferentes tipos de contenido y condiciones de red.
 
 **Beneficios:**
 - Transferencias de archivos confiables con recuperación automática
@@ -33,9 +33,9 @@ Este ejemplo muestra cómo implementar transferencias de archivos robustas y str
 ## Código de Implementación
 
 ```swift
-import BitchatCore
-import BitchatBLE
-import BitchatNostr
+import BitCore
+import BitBLE
+import BitNostr
 import CryptoKit
 import Compression
 import Combine

@@ -2,7 +2,7 @@
 
 ## Descripción
 
-**Pluribus** es una aplicación completa de mensajería peer-to-peer que demuestra el uso integral del framework BitchatCommunications. La aplicación permite comunicaciones seguras, privadas y resistentes a la censura entre dispositivos iOS y macOS.
+**Pluribus** es una aplicación completa de mensajería peer-to-peer que demuestra el uso integral del framework BitCommunications. La aplicación permite comunicaciones seguras, privadas y resistentes a la censura entre dispositivos iOS y macOS.
 
 **Características Principales:**
 - Mensajería en tiempo real con encriptación end-to-end
@@ -19,7 +19,7 @@
 - **SwiftUI** para la interfaz moderna
 - **Combine** para manejo reactivo de estado
 - **Core Data** para persistencia local
-- **BitchatCommunications** como núcleo de comunicaciones
+- **BitCommunications** como núcleo de comunicaciones
 
 ## Estructura del Proyecto
 
@@ -92,7 +92,7 @@ Pluribus/
 
 ```swift
 import SwiftUI
-import BitchatCommunications
+import BitCommunications
 
 @main
 struct PluribusApp: App {
@@ -147,7 +147,7 @@ class AppState: ObservableObject {
 ### 2. CommunicationService.swift - Servicio principal de comunicaciones
 
 ```swift
-import BitchatCommunications
+import BitCommunications
 import Combine
 
 class CommunicationService: ObservableObject {
@@ -1326,7 +1326,7 @@ struct PrivacySettingsView: View {
 
 ```swift
 import Foundation
-import BitchatCommunications
+import BitCommunications
 
 // Usuario
 struct User {
@@ -1597,7 +1597,7 @@ extension PeerID {
 
 ## Conclusión
 
-**Pluribus** es una aplicación completa que demuestra el uso integral del framework BitchatCommunications. Incluye:
+**Pluribus** es una aplicación completa que demuestra el uso integral del framework BitCommunications. Incluye:
 
 - **Arquitectura completa** con servicios modulares
 - **Interfaz moderna** con SwiftUI
@@ -1607,6 +1607,6 @@ extension PeerID {
 - **Persistencia local** con Core Data
 - **Soporte multiplataforma** (iOS/macOS)
 
-La aplicación está diseñada para ser segura, privada y resistente a la censura, aprovechando todas las capacidades del framework BitchatCommunications para proporcionar una experiencia de mensajería P2P de vanguardia.
+La aplicación está diseñada para ser segura, privada y resistente a la censura, aprovechando todas las capacidades del framework BitCommunications para proporcionar una experiencia de mensajería P2P de vanguardia.
 
-Para usar esta aplicación, simplemente crea un nuevo proyecto Xcode, copia los archivos proporcionados, añade las dependencias del framework BitchatCommunications, y configura los permisos necesarios en el Info.plist.
+Para usar esta aplicación, simplemente crea un nuevo proyecto Xcode, copia los archivos proporcionados, añade las dependencias del framework BitCommunications, y configura los permisos necesarios en el Info.plist.

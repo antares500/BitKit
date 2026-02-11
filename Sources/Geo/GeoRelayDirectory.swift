@@ -1,7 +1,7 @@
 import BitLogger
 import Foundation
-import Tor
-import BitchatCore
+import BitTor
+import BitCore
 #if os(iOS)
 import UIKit
 #elseif os(macOS)
@@ -149,7 +149,7 @@ final class GeoRelayDirectory {
         entries = parsed
         persistCache(csv)
         UserDefaults.standard.set(Date(), forKey: lastFetchKey)
-        SecureLogger.info("GeoRelayDirectory: refreshed \(parsed.count) relays from remote", category: .session)
+        BitLogger.info("GeoRelayDirectory: refreshed \(parsed.count) relays from remote", category: .session)
         isFetching = false
         retryAttempt = 0
         cancelRetry()
@@ -159,11 +159,11 @@ final class GeoRelayDirectory {
     private func handleFetchFailure(_ reason: FetchFailure) {
         switch reason {
         case .torNotReady:
-            SecureLogger.warning("GeoRelayDirectory: Tor not ready; scheduling retry", category: .session)
+            BitLogger.warning("GeoRelayDirectory: Tor not ready; scheduling retry", category: .session)
         case .invalidData:
-            SecureLogger.warning("GeoRelayDirectory: remote fetch returned invalid data; scheduling retry", category: .session)
+            BitLogger.warning("GeoRelayDirectory: remote fetch returned invalid data; scheduling retry", category: .session)
         case .network(let error):
-            SecureLogger.warning("GeoRelayDirectory: remote fetch failed with error: \(error.localizedDescription)", category: .session)
+            BitLogger.warning("GeoRelayDirectory: remote fetch failed with error: \(error.localizedDescription)", category: .session)
         }
         isFetching = false
         scheduleRetry()
@@ -199,7 +199,7 @@ final class GeoRelayDirectory {
         do {
             try text.data(using: .utf8)?.write(to: url, options: .atomic)
         } catch {
-            SecureLogger.warning("GeoRelayDirectory: failed to write cache: \(error)", category: .session)
+            BitLogger.warning("GeoRelayDirectory: failed to write cache: \(error)", category: .session)
         }
     }
 
@@ -235,7 +235,7 @@ final class GeoRelayDirectory {
             return Self.parseCSV(text)
         }
 
-        SecureLogger.warning("GeoRelayDirectory: no local CSV found; entries empty", category: .session)
+        BitLogger.warning("GeoRelayDirectory: no local CSV found; entries empty", category: .session)
         return []
     }
 
@@ -281,9 +281,9 @@ final class GeoRelayDirectory {
         let center = NotificationCenter.default
 
         let torReady = center.addObserver(
-            forName: .TorDidBecomeReady,
+            forName: Notification.Name.TorDidBecomeReady,
             object: nil,
-            queue: .main
+            queue: OperationQueue.main
         ) { [weak self] _ in
             guard let self else { return }
             Task { @MainActor in
@@ -296,7 +296,7 @@ final class GeoRelayDirectory {
         let didBecomeActive = center.addObserver(
             forName: UIApplication.didBecomeActiveNotification,
             object: nil,
-            queue: .main
+            queue: OperationQueue.main
         ) { [weak self] _ in
             guard let self else { return }
             Task { @MainActor in
@@ -308,7 +308,7 @@ final class GeoRelayDirectory {
         let didBecomeActive = center.addObserver(
             forName: NSApplication.didBecomeActiveNotification,
             object: nil,
-            queue: .main
+            queue: OperationQueue.main
         ) { [weak self] _ in
             guard let self else { return }
             Task { @MainActor in

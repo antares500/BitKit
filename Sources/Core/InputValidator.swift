@@ -31,7 +31,7 @@ public enum InputValidator {
         if !trimmed.unicodeScalars.allSatisfy({ !controlChars.contains($0) }) {
             // Log rejection for monitoring, without exposing actual content for privacy
             let controlCharCount = trimmed.unicodeScalars.filter { controlChars.contains($0) }.count
-            SecureLogger.debug(
+            BitLogger.debug(
                 "Input validation rejected string (length: \(trimmed.count), control chars: \(controlCharCount))",
                 category: .security
             )

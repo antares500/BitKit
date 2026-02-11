@@ -22,16 +22,16 @@ Este ejemplo muestra cómo integrar capacidades de geolocalización para crear z
 ## Pasos Previos Obligatorios
 
 1. **Completar Configuración Básica** (Ejemplo 01)
-2. **Añadir BitchatGeo** a las dependencias del proyecto
+2. **Añadir BitGeo** a las dependencias del proyecto
 3. **Configurar permisos de ubicación** en Info.plist (NSLocationWhenInUseUsageDescription)
 4. **Implementar LocationPrivacyManager** para manejo ético de datos de ubicación
 
 ## Código de Implementación
 
 ```swift
-import BitchatCore
-import BitchatGeo
-import BitchatBLE
+import BitCore
+import BitGeo
+import BitBLE
 import CoreLocation
 import Combine
 

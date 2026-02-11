@@ -20,16 +20,16 @@ Este ejemplo demuestra cómo integrar el protocolo Nostr para comunicaciones glo
 ## Pasos Previos Obligatorios
 
 1. **Completar Configuración Básica** (Ejemplo 01)
-2. **Añadir BitchatNostr** a las dependencias del proyecto
+2. **Añadir BitNostr** a las dependencias del proyecto
 3. **Configurar conectividad de red** (necesaria para relays)
 4. **Implementar NostrIdentityBridge** si usas identidades Nostr personalizadas
 
 ## Código de Implementación
 
 ```swift
-import BitchatCore
-import BitchatNostr
-import BitchatState
+import BitCore
+import BitNostr
+import BitState
 
 // Controlador para integración Nostr
 class NostrController {
@@ -106,7 +106,7 @@ class NostrController {
         }
 
         // Añadir metadatos útiles
-        tags.append(["client", "BitchatCommunications"])
+        tags.append(["client", "BitCommunications"])
 
         return tags
     }
@@ -190,7 +190,7 @@ class NostrController {
 
     // Buscar relays cercanos geográficamente
     func buscarRelaysCercanos(latitud: Double, longitud: Double) {
-        // Usar BitchatGeo para encontrar relays cercanos
+        // Usar BitGeo para encontrar relays cercanos
         // Esto mejoraría la velocidad y privacidad
         print("Buscando relays cercanos a (\(latitud), \(longitud))")
 
@@ -229,7 +229,7 @@ class NostrIdentityBridge {
 // Extensión del delegate para eventos Nostr
 extension MiDelegate {
     // Los eventos Nostr se manejarían a través del NostrRelayManager
-    // y sus callbacks específicos, no a través del BitchatDelegate principal
+    // y sus callbacks específicos, no a través del BitDelegate principal
 }
 
 // Ejemplo de uso en una aplicación de chat global
@@ -250,7 +250,7 @@ class GlobalChatController {
 
         // Publicar mensaje de bienvenida
         nostrController.publicarMensaje(
-            "¡Hola desde Bitchat! Una app de mensajería P2P segura.",
+            "¡Hola desde Bit! Una app de mensajería P2P segura.",
             etiquetas: ["bitchat", "p2p", "privacy"]
         )
     }

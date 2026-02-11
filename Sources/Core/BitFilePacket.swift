@@ -1,5 +1,5 @@
 //
-// BitchatFilePacket.swift
+// BitFilePacket.swift
 // bitchat
 //
 // This is free and unencumbered software released into the public domain.
@@ -9,7 +9,7 @@
 import Foundation
 
 /// File packet structure
-public struct BitchatFilePacket {
+public struct BitFilePacket {
     public let data: Data
     public let filename: String
     public let mimeType: String
@@ -19,7 +19,7 @@ public struct BitchatFilePacket {
         return nil
     }
     
-    public static func decode(_ data: Data) -> BitchatFilePacket? {
+    public static func decode(_ data: Data) -> BitFilePacket? {
         // Stub implementation
         return nil
     }

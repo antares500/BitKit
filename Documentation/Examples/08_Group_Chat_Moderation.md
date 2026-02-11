@@ -2,7 +2,7 @@
 
 ## Descripción
 
-Este ejemplo demuestra cómo implementar un sistema completo de grupos de chat con moderación de contenido, roles de usuario, analytics y gestión comunitaria en BitchatCommunications. Aprenderás a crear comunidades seguras, moderar conversaciones, gestionar permisos y analizar el comportamiento de los grupos para mantener entornos positivos.
+Este ejemplo demuestra cómo implementar un sistema completo de grupos de chat con moderación de contenido, roles de usuario, analytics y gestión comunitaria en BitCommunications. Aprenderás a crear comunidades seguras, moderar conversaciones, gestionar permisos y analizar el comportamiento de los grupos para mantener entornos positivos.
 
 **Beneficios:**
 - Creación de comunidades temáticas y privadas
@@ -23,15 +23,15 @@ Este ejemplo demuestra cómo implementar un sistema completo de grupos de chat c
 
 1. **Completar Configuración Básica** (Ejemplo 01)
 2. **Configurar BLE Mesh** (Ejemplo 02)
-3. **Añadir BitchatCommunications** a las dependencias del proyecto
+3. **Añadir BitCommunications** a las dependencias del proyecto
 4. **Implementar GroupChatManager** y **ModerationManager**
 
 ## Código de Implementación
 
 ```swift
-import BitchatCore
-import BitchatCommunications
-import BitchatBLE
+import BitCore
+import BitCommunications
+import BitBLE
 import Combine
 
 // Manager principal de grupos

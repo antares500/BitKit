@@ -1,4 +1,4 @@
-// BitchatPacket.swift - Impl de WHITEPAPER (v2 con route)
+// BitPacket.swift - Impl de WHITEPAPER (v2 con route)
 import Foundation
 
 public enum MessageType: UInt8 {
@@ -17,7 +17,7 @@ public enum MessageType: UInt8 {
     case fileTransfer = 0x22    // Binary file/audio/image payloads
 }
 
-public struct BitchatPacket {
+public struct BitPacket {
     public let version: UInt8
     public let type: UInt8
     public let senderID: Data

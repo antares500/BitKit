@@ -1,6 +1,6 @@
 // GroupChatManager.swift - Gestiona chats grupales
 import Foundation
-import BitchatCore
+import BitCore
 
 public protocol GroupChatDelegate: AnyObject {
     func didJoinGroup(_ groupID: String)
@@ -8,9 +8,11 @@ public protocol GroupChatDelegate: AnyObject {
     func didReceiveGroupMessage(from groupID: String, peerID: PeerID, content: String)
 }
 
-public class GroupChatManager {
+public class GroupChatManager: ObservableObject {
     public weak var delegate: GroupChatDelegate?
     private var groups: [String: [PeerID]] = [:]  // groupID: members
+    
+    public init() {}
     
     public func createGroup(name: String, members: [PeerID]) -> String {
         let groupID = UUID().uuidString

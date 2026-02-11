@@ -95,9 +95,9 @@ public final class TorManager: ObservableObject {
         isDormant = false
         isStarting = true
         startedAt = Date()  // Track startup time for grace period
-        SecureLogger.debug("TorManager: startIfNeeded() - startedAt set", category: .session)
+        BitLogger.debug("TorManager: startIfNeeded() - startedAt set", category: .session)
         lastError = nil
-        // NotificationCenter.default.post(name: .TorWillStart, object: nil)
+        // NotificationCenter.general.post(name: .TorWillStart, object: nil)
         ensureFilesystemLayout()
         startArti()
         startPathMonitorIfNeeded()
@@ -160,7 +160,7 @@ public final class TorManager: ObservableObject {
 
         // Check if already running
         if arti_is_running() != 0 {
-            SecureLogger.info("TorManager: Arti already running", category: .session)
+            BitLogger.info("TorManager: Arti already running", category: .session)
             startBootstrapMonitor()
             return
         }
@@ -170,13 +170,13 @@ public final class TorManager: ObservableObject {
         }
 
         if result != 0 {
-            SecureLogger.error("TorManager: arti_start failed rc=\(result)", category: .session)
+            BitLogger.error("TorManager: arti_start failed rc=\(result)", category: .session)
             isStarting = false
             lastError = NSError(domain: "TorManager", code: Int(result), userInfo: [NSLocalizedDescriptionKey: "Arti start failed"])
             return
         }
 
-        SecureLogger.info("TorManager: arti_start OK (SOCKS \(socksHost):\(socksPort))", category: .session)
+        BitLogger.info("TorManager: arti_start OK (SOCKS \(socksHost):\(socksPort))", category: .session)
         startBootstrapMonitor()
 
         // Start SOCKS readiness probe
@@ -186,10 +186,10 @@ public final class TorManager: ObservableObject {
             await MainActor.run {
                 self.socksReady = ready
                 if ready {
-                    SecureLogger.info("TorManager: SOCKS ready at \(self.socksHost):\(self.socksPort)", category: .session)
+                    BitLogger.info("TorManager: SOCKS ready at \(self.socksHost):\(self.socksPort)", category: .session)
                 } else {
                     self.lastError = NSError(domain: "TorManager", code: -14, userInfo: [NSLocalizedDescriptionKey: "SOCKS not reachable"])
-                    SecureLogger.error("TorManager: SOCKS not reachable (timeout)", category: .session)
+                    BitLogger.error("TorManager: SOCKS not reachable (timeout)", category: .session)
                 }
             }
         }
@@ -290,7 +290,7 @@ public final class TorManager: ObservableObject {
 
     public func ensureRunningOnForeground() {
         if !allowAutoStart { return }
-        SecureLogger.debug("TorManager: ensureRunningOnForeground() started", category: .session)
+        BitLogger.debug("TorManager: ensureRunningOnForeground() started", category: .session)
         Task.detached(priority: .userInitiated) { [weak self] in
             guard let self = self else { return }
             let claimed: Bool = await MainActor.run {
@@ -317,7 +317,7 @@ public final class TorManager: ObservableObject {
         // Arti doesn't support real dormant mode, so just mark as not ready.
         // iOS will suspend the runtime anyway. On foreground we do a full restart.
         // Clear isStarting so foreground recovery can proceed if bootstrap was interrupted.
-        SecureLogger.debug("TorManager: goDormantOnBackground() called", category: .session)
+        BitLogger.debug("TorManager: goDormantOnBackground() called", category: .session)
         Task { @MainActor in
             self.isReady = false
             self.socksReady = false
@@ -326,7 +326,7 @@ public final class TorManager: ObservableObject {
     }
 
     public func shutdownCompletely() {
-        SecureLogger.debug("TorManager: shutdownCompletely() called", category: .session)
+        BitLogger.debug("TorManager: shutdownCompletely() called", category: .session)
         Task.detached { [weak self] in
             guard let self = self else { return }
             _ = arti_stop()
@@ -355,9 +355,9 @@ public final class TorManager: ObservableObject {
     }
 
     private func restartArti() async {
-        SecureLogger.debug("TorManager: restartArti() starting", category: .session)
+        BitLogger.debug("TorManager: restartArti() starting", category: .session)
         await MainActor.run {
-            // NotificationCenter.default.post(name: .TorWillRestart, object: nil)
+            // NotificationCenter.general.post(name: .TorWillRestart, object: nil)
             self.isReady = false
             self.socksReady = false
             self.bootstrapProgress = 0
@@ -388,11 +388,11 @@ public final class TorManager: ObservableObject {
         let ready = socksReady && bootstrapProgress >= 100
         if ready != isReady {
             if !ready {
-                SecureLogger.debug("TorManager: isReady -> false (socksReady=\(socksReady), bootstrap=\(bootstrapProgress))", category: .session)
+                BitLogger.debug("TorManager: isReady -> false (socksReady=\(socksReady), bootstrap=\(bootstrapProgress))", category: .session)
             }
             isReady = ready
             if ready {
-                // NotificationCenter.default.post(name: .TorDidBecomeReady, object: nil)
+                // NotificationCenter.general.post(name: .TorDidBecomeReady, object: nil)
             }
         }
     }
@@ -418,20 +418,20 @@ public final class TorManager: ObservableObject {
     private func pokeTorOnPathChange() {
         // Skip if we recently restarted
         if let last = lastRestartAt, Date().timeIntervalSince(last) < 3.0 {
-            SecureLogger.debug("TorManager: pokeTorOnPathChange() skipped - recent restart", category: .session)
+            BitLogger.debug("TorManager: pokeTorOnPathChange() skipped - recent restart", category: .session)
             return
         }
         // Skip during initial startup grace period (15s) to avoid race conditions
         if let started = startedAt, Date().timeIntervalSince(started) < 15.0 {
-            SecureLogger.debug("TorManager: pokeTorOnPathChange() skipped - startup grace period (\(Int(Date().timeIntervalSince(started)))s)", category: .session)
+            BitLogger.debug("TorManager: pokeTorOnPathChange() skipped - startup grace period (\(Int(Date().timeIntervalSince(started)))s)", category: .session)
             return
         }
         if isStarting || restarting {
-            SecureLogger.debug("TorManager: pokeTorOnPathChange() skipped - isStarting=\(isStarting) restarting=\(restarting)", category: .session)
+            BitLogger.debug("TorManager: pokeTorOnPathChange() skipped - isStarting=\(isStarting) restarting=\(restarting)", category: .session)
             return
         }
         if isReady { return }
-        SecureLogger.debug("TorManager: pokeTorOnPathChange() - Arti not ready, initiating recovery", category: .session)
+        BitLogger.debug("TorManager: pokeTorOnPathChange() - Arti not ready, initiating recovery", category: .session)
         ensureRunningOnForeground()
     }
 }

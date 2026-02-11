@@ -2,7 +2,7 @@ import Foundation
 import Combine
 
 public protocol Transport {
-    var delegate: BitchatDelegate? { get set }
+    var delegate: BitDelegate? { get set }
     var peerEventsDelegate: TransportPeerEventsDelegate? { get set }
     var peerSnapshotPublisher: AnyPublisher<[TransportPeerSnapshot], Never> { get }
     var myPeerID: PeerID { get }

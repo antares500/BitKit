@@ -31,9 +31,9 @@ Este ejemplo extiende la configuración básica para implementar una red mesh Bl
 ## Código de Implementación
 
 ```swift
-import BitchatCore
-import BitchatBLE
-import BitchatState
+import BitCore
+import BitBLE
+import BitState
 import Combine
 
 // Extender la configuración básica con BLE Mesh
@@ -169,7 +169,7 @@ struct PeerInfo {
 
 // Extensión del delegate para manejar eventos mesh específicos
 extension MiDelegate {
-    // Este método ya está en BitchatDelegate, pero podemos añadir lógica específica
+    // Este método ya está en BitDelegate, pero podemos añadir lógica específica
     func didUpdatePeerList(_ peers: [PeerID]) {
         print("Lista mesh actualizada: \(peers.count) peers totales")
 

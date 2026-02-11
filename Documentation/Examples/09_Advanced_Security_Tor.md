@@ -2,7 +2,7 @@
 
 ## Descripción
 
-Este ejemplo muestra cómo integrar capacidades avanzadas de seguridad y anonimato usando Tor en BitchatCommunications. Aprenderás a configurar el enrutamiento anónimo, implementar verificación de identidades, gestionar claves criptográficas complejas y crear canales de comunicación completamente anónimos que protegen tanto el contenido como los metadatos.
+Este ejemplo muestra cómo integrar capacidades avanzadas de seguridad y anonimato usando Tor en BitCommunications. Aprenderás a configurar el enrutamiento anónimo, implementar verificación de identidades, gestionar claves criptográficas complejas y crear canales de comunicación completamente anónimos que protegen tanto el contenido como los metadatos.
 
 **Beneficios:**
 - Anonimato completo mediante enrutamiento Tor
@@ -22,7 +22,7 @@ Este ejemplo muestra cómo integrar capacidades avanzadas de seguridad y anonima
 ## Pasos Previos Obligatorios
 
 1. **Completar Configuración Básica** (Ejemplo 01)
-2. **Añadir BitchatTor** a las dependencias del proyecto
+2. **Añadir BitTor** a las dependencias del proyecto
 3. **Instalar y configurar Tor** en el dispositivo
 4. **Implementar TorManager** y **VerificationManager**
 5. **Configurar permisos de red** para conexiones Tor
@@ -30,9 +30,9 @@ Este ejemplo muestra cómo integrar capacidades avanzadas de seguridad y anonima
 ## Código de Implementación
 
 ```swift
-import BitchatCore
-import BitchatTor
-import BitchatBLE
+import BitCore
+import BitTor
+import BitBLE
 import Network
 import CryptoKit
 

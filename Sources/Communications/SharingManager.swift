@@ -1,5 +1,5 @@
 import Foundation
-import BitchatCore
+import BitCore
 
 public protocol SharingDelegate: AnyObject {
     func didReceiveSharedContent(content: SharedContent)
@@ -62,7 +62,7 @@ public class SharingManager {
     }
     
     // Create shareable content for system sharing
-    public func createShareableContent(from message: BitchatMessage) -> [Any] {
+    public func createShareableContent(from message: BitMessage) -> [Any] {
         var items: [Any] = []
         
         // Since content is a String, treat it as text or try to parse as URL
