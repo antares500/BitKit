@@ -27,7 +27,7 @@ Añade a tu `Package.swift`:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/antares500/bitKit.git", from: "1.1.0")
+    .package(url: "https://github.com/antares500/bitKit.git", from: "1.2.0")
 ]
 ```
 
