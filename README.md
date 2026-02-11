@@ -1,4 +1,6 @@
-![bitKit Icon](bitKit.svg)
+<p align="center">
+  <img src="bitKit.svg" alt="bitKit Icon" width="200">
+</p>
 
 # bitKit (alpha)
 Comunicaciones P2P seguras y privadas para la era moderna.
