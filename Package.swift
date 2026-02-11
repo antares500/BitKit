@@ -11,6 +11,7 @@ let package = Package(
         .library(name: "BitState", targets: ["BitState"]),
         .library(name: "BitMedia", targets: ["BitMedia"]),
         .library(name: "BitTransport", targets: ["BitTransport"]),
+        .library(name: "BitCommunications", targets: ["BitCommunications"]),
         .library(name: "BitIdentity", targets: ["BitIdentity"]),
         .library(name: "BitGeo", targets: ["BitGeo"]),
         .library(name: "BitRouting", targets: ["BitRouting"]),
@@ -29,12 +30,13 @@ let package = Package(
         .target(name: "BitState", dependencies: ["BitCore", "BitLogger"], path: "Sources/State"),
         .target(name: "BitMedia", dependencies: ["BitCore"], path: "Sources/Media"),
         .target(name: "BitTransport", dependencies: ["BitCore", "BitState", "BitLogger", "BitGeo", .product(name: "P256K", package: "swift-secp256k1")], path: "Sources/Transport"),
+        .target(name: "BitCommunications", dependencies: ["BitCore", "BitLogger"], path: "Sources/Communications"),
         .target(name: "BitIdentity", dependencies: ["BitCore"], path: "Sources/Identity"),
         .target(name: "BitGeo", dependencies: ["BitCore", "BitTor", "BitLogger"], path: "Sources/Geo"),
         .target(name: "BitRouting", dependencies: ["BitCore"], path: "Sources/Routing"),
         .target(name: "BitChatGroup", dependencies: ["BitCore"], path: "Sources/ChatGroup"),
         .target(name: "BitReliabilityExtended", dependencies: ["BitCore"], path: "Sources/ReliabilityExtended"),
-        .target(name: "BitAnalytics", dependencies: ["BitCore"], path: "Sources/Analytics"),
-        .target(name: "BitKit", dependencies: ["BitCore", "BitTransport", "BitGeo", "BitState", "BitMedia", "BitTor", "BitChatGroup", "BitReliabilityExtended", "BitAnalytics"], path: "Sources/Kit"),
+        .target(name: "BitAnalytics", dependencies: ["BitCommunications"], path: "Sources/Analytics"),
+        .target(name: "BitKit", dependencies: ["BitCore", "BitTransport", "BitGeo", "BitState", "BitMedia", "BitTor", "BitCommunications", "BitChatGroup", "BitReliabilityExtended", "BitAnalytics"], path: "Sources/Kit"),
     ]
 )
