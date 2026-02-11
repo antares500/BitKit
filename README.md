@@ -1,7 +1,6 @@
 ![bitKit Icon](bitkit.svg)
 
-
-# bitKit
+# bitKit (alpha)
 Comunicaciones P2P seguras y privadas para la era moderna.
 
 Paquete Swift modular para comunicaciones P2P seguras, privadas y resistentes a la censura. Proporciona una arquitectura completa de mensajería peer-to-peer con soporte para Bluetooth Low Energy (BLE), Nostr relays globales, geolocalización.
@@ -134,6 +133,11 @@ Explora nuestras guías detalladas para todas las funcionalidades:
 
 #### 📊 **Analytics y Comunidad**
 - **[13: Analytics, Métricas y Comunidad](Documentation/Examples/13_Analytics_Metrics_Community.md)**: Insights y dashboards
+
+#### 🔧 **Utilidades Avanzadas**
+- **[14: App Completa Pluribus](Documentation/Examples/14_Pluribus_Complete_App.md)**: Integración completa de todos los módulos
+- **[15: Logging y Monitoreo Avanzado](Documentation/Examples/15_Logging_Monitoring.md)**: Sistema de logs estructurado y monitoreo
+- **[16: Routing Inteligente y Failover](Documentation/Examples/16_Routing_Intelligent_Failover.md)**: Enrutamiento automático y recuperación de fallos
 
 ## Requisitos
 
