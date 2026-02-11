@@ -47,7 +47,9 @@ targets: [
         "BitChat",           // Chat grupal y moderación
         "BitReliability",    // Confiabilidad y failover
         "BitSync",           // Sincronización
-        "BitVerification"    // Verificación de identidad
+        "BitVerification",   // Verificación de identidad
+        "BitGroup",          // Gestión de grupos y moderación
+        "BitAnalytics"       // Analytics y métricas de comunidad
     ])
 ]
 ```
@@ -67,7 +69,9 @@ bitKit
 ├── BitChat          # Chat grupal y moderación
 ├── BitReliability   # Confiabilidad y failover
 ├── BitSync          # Sincronización
-└── BitVerification  # Verificación de identidad
+├── BitVerification  # Verificación de identidad
+├── BitGroup         # Gestión de grupos y moderación
+└── BitAnalytics     # Analytics y métricas de comunidad
 ```
 
 ## Configuración de Redes

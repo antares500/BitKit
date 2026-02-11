@@ -20,6 +20,8 @@ let package = Package(
         .library(name: "BitReliability", targets: ["BitReliability"]),
         .library(name: "BitSync", targets: ["BitSync"]),
         .library(name: "BitVerification", targets: ["BitVerification"]),
+        .library(name: "BitGroup", targets: ["BitGroup"]),
+        .library(name: "BitAnalytics", targets: ["BitAnalytics"]),
     ],
     dependencies: [
         .package(url: "https://github.com/21-DOT-DEV/swift-secp256k1", exact: "0.21.1"),
@@ -40,5 +42,7 @@ let package = Package(
         .target(name: "BitReliability", dependencies: ["BitCore"], path: "Sources/Reliability"),
         .target(name: "BitSync", dependencies: ["BitCore"], path: "Sources/Sync"),
         .target(name: "BitVerification", dependencies: ["BitCore"], path: "Sources/Verification"),
+        .target(name: "BitGroup", dependencies: ["BitCommunications"], path: "Sources/Group"),
+        .target(name: "BitAnalytics", dependencies: ["BitCommunications"], path: "Sources/Analytics"),
     ]
 )
