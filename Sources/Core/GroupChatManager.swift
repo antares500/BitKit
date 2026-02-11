@@ -1,6 +1,5 @@
 // GroupChatManager.swift - Gestiona chats grupales
 import Foundation
-import BitCore
 
 public protocol GroupChatDelegate: AnyObject {
     func didJoinGroup(_ groupID: String)

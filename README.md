@@ -38,8 +38,7 @@ Elige los targets según tus necesidades o usa presets recomendados:
 ```swift
 // Básico (mensajería simple)
 .target(name: "MiApp", dependencies: [
-    "BitCore",           // Núcleo requerido
-    "BitCommunications"  // Coordinación básica
+    "BitCore"  // Núcleo con comunicaciones básicas
 ])
 
 // Completo (todo incluido)
@@ -49,13 +48,12 @@ Elige los targets según tus necesidades o usa presets recomendados:
 
 // Personalizado (elige módulos)
 .target(name: "MiApp", dependencies: [
-    "BitCore",                  // Núcleo requerido
+    "BitCore",                  // Núcleo con comunicaciones básicas
     "BitTransport",             // BLE + Nostr
     "BitGeo",                   // Geolocalización
     "BitState",                 // Persistencia
     "BitMedia",                 // Multimedia
     "BitTor",                   // Anonimato
-    "BitCommunications",        // Coordinación
     "BitChatGroup",             // Chat y grupos
     "BitReliabilityExtended",   // Confiabilidad, sync, verificación
     "BitAnalytics"              // Métricas
@@ -66,13 +64,12 @@ Elige los targets según tus necesidades o usa presets recomendados:
 
 ```
 bitKit
-├── BitCore          # Núcleo: protocolos, encriptación, utilidades
+├── BitCore          # Núcleo: protocolos, encriptación, comunicaciones básicas
 ├── BitTransport     # Transportes: BLE mesh + Nostr relays
 ├── BitGeo           # Geolocalización y canales geo
 ├── BitState         # Persistencia segura (Keychain)
 ├── BitMedia         # Manejo de multimedia
 ├── BitTor           # Anonimato con Tor
-├── BitCommunications # Coordinación de transportes
 ├── BitChatGroup     # Chat individual y grupal
 ├── BitReliabilityExtended # Confiabilidad, sync, verificación
 ├── BitAnalytics     # Analytics y métricas de comunidad
