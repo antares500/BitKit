@@ -44,8 +44,10 @@ targets: [
         "BitMedia",          // Multimedia
         "BitTor",            // Anonimato (opcional)
         "BitCommunications", // Coordinación de transportes
-        "BitGroup",          // Grupos y moderación
-        "BitAnalytics"       // Analytics (opcional)
+        "BitChat",           // Chat grupal y moderación
+        "BitReliability",    // Confiabilidad y failover
+        "BitSync",           // Sincronización
+        "BitVerification"    // Verificación de identidad
     ])
 ]
 ```
@@ -62,8 +64,10 @@ bitKit
 ├── BitMedia         # Manejo de multimedia
 ├── BitTor           # Anonimato con Tor
 ├── BitCommunications # Coordinación de transportes
-├── BitGroup         # Gestión de grupos y moderación
-└── BitAnalytics     # Analytics y métricas de comunidad
+├── BitChat          # Chat grupal y moderación
+├── BitReliability   # Confiabilidad y failover
+├── BitSync          # Sincronización
+└── BitVerification  # Verificación de identidad
 ```
 
 ## Configuración de Redes

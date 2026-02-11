@@ -22,7 +22,7 @@ public class MessageRouter {
             let wrapper = TransportDelegateWrapper(router: self)
             transports[i].delegate = wrapper
             transports[i].peerSnapshotPublisher
-                .sink { [weak self] snapshots in
+                .sink { snapshots in
                     // Handle peer snapshots if needed
                 }
                 .store(in: &cancellables)
