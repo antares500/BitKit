@@ -56,7 +56,7 @@ Elige los targets según tus necesidades o usa presets recomendados:
     "BitMedia",                 // Multimedia
     "BitTor",                   // Anonimato
     "BitChatGroup",             // Chat y grupos
-    "BitReliabilityExtended",   // Confiabilidad, sync, verificación
+    "BitReliability",   // Confiabilidad, sync, verificación
     "BitAnalytics"              // Métricas
 ])
 ```
@@ -73,7 +73,7 @@ bitKit
 ├── BitTor           # Anonimato con Tor
 ├── BitCommunications # Coordinación de transportes
 ├── BitChatGroup     # Chat individual y grupal
-├── BitReliabilityExtended # Confiabilidad, sync, verificación
+├── BitReliability   # Confiabilidad, sync, verificación
 ├── BitAnalytics     # Analytics y métricas de comunidad
 └── BitKit           # Todo incluido (preset completo)
 ```
