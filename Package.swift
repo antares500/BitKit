@@ -32,11 +32,12 @@ let package = Package(
         .target(name: "BitTransport",       dependencies: ["BitCore", "BitState", "BitLogger", "BitGeo", .product(name: "P256K", package: "swift-secp256k1")], path: "Sources/Transport"),
         .target(name: "BitCommunications",  dependencies: ["BitCore", "BitLogger"], path: "Sources/Communications"),
         .target(name: "BitIdentity",        dependencies: ["BitCore"],              path: "Sources/Identity"),
-        .target(name: "BitGeo",             dependencies: ["BitCore", "BitTor", "BitLogger"], path: "Sources/Geo"),
+        .target(name: "BitGeo",             dependencies: ["BitCore", "BitLogger"], path: "Sources/Geo"),
         .target(name: "BitRouting",         dependencies: ["BitCore"],              path: "Sources/Routing"),
         .target(name: "BitChatGroup",       dependencies: ["BitCore"],              path: "Sources/ChatGroup"),
         .target(name: "BitReliability",     dependencies: ["BitCore"],      path: "Sources/ReliabilityExtended"),
         .target(name: "BitAnalytics",       dependencies: ["BitCommunications"],    path: "Sources/Analytics"),
-        .target(name: "BitKit",             dependencies: ["BitCore", "BitTransport", "BitGeo", "BitState", "BitMedia", "BitTor", "BitCommunications", "BitChatGroup", "BitReliability", "BitAnalytics"], path: "Sources/Kit"),
+        .target(name: "BitKit",             dependencies: ["BitCore", "BitTransport", "BitGeo", "BitState", "BitMedia", "BitCommunications", "BitChatGroup", "BitReliability", "BitAnalytics"], path: "Sources/Kit"),
+        .testTarget(name: "BitCoreTests", dependencies: ["BitCore", "BitState", "BitMedia"], path: "Tests"),
     ]
 )

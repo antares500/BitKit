@@ -4,6 +4,7 @@ import CoreBluetooth
 import Combine
 import CryptoKit
 import BitCore
+import BitState
 #if os(iOS)
 import UIKit
 #endif
@@ -120,7 +121,7 @@ public final class BLEService: NSObject, Transport {
     // MARK: - Identity
     
     private var noiseService: NoiseEncryptionService
-    private let identityManager: SecureIdentityStateManagerProtocol
+    private let identityManager: BitState.SecureIdentityStateManagerProtocol
     private let keychain: KeychainManagerProtocol
     private let idBridge: NostrIdentityBridge
     private let applicationInfoProvider: ApplicationInfoProvider?
@@ -252,10 +253,10 @@ public final class BLEService: NSObject, Transport {
     
     // MARK: - Initialization
     
-    init(
+    public init(
         keychain: KeychainManagerProtocol,
         idBridge: NostrIdentityBridge,
-        identityManager: SecureIdentityStateManagerProtocol,
+        identityManager: BitState.SecureIdentityStateManagerProtocol,
         applicationInfoProvider: ApplicationInfoProvider? = nil
     ) {
         self.keychain = keychain
@@ -283,13 +284,13 @@ public final class BLEService: NSObject, Transport {
         }
         
         // Observe application state changes
-        NotificationCenter.general.addObserver(
+        NotificationCenter.default.addObserver(
             self,
             selector: #selector(appDidBecomeActive),
             name: UIApplication.didBecomeActiveNotification,
             object: nil
         )
-        NotificationCenter.general.addObserver(
+        NotificationCenter.default.addObserver(
             self,
             selector: #selector(appDidEnterBackground),
             name: UIApplication.didEnterBackgroundNotification,
@@ -369,7 +370,7 @@ public final class BLEService: NSObject, Transport {
         centralManager?.stopScan()
         peripheralManager?.stopAdvertising()
         #if os(iOS)
-        NotificationCenter.general.removeObserver(self)
+        NotificationCenter.default.removeObserver(self)
         #endif
     }
 

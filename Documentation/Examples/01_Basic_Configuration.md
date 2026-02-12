@@ -25,7 +25,7 @@ Este ejemplo muestra cómo configurar los componentes básicos de bitKit para un
 
 ```swift
 import BitCore
-import BitBLE
+import BitTransport
 import BitState
 
 // Paso 1: Implementar KeychainManagerProtocol para persistencia segura
@@ -33,18 +33,18 @@ import BitState
 class MiKeychain: KeychainManagerProtocol {
     // Almacena claves de identidad de forma segura
     func getIdentityKey(forKey key: String) -> Data? {
-        return UserDefaults.standard.data(forKey: "bitchat_\(key)")
+        return UserDefaults.standard.data(forKey: "bitkit_\(key)")
     }
 
     // Guarda claves de identidad de forma segura
     func saveIdentityKey(_ data: Data, forKey key: String) -> Bool {
-        UserDefaults.standard.set(data, forKey: "bitchat_\(key)")
+        UserDefaults.standard.set(data, forKey: "bitkit_\(key)")
         return UserDefaults.standard.synchronize()
     }
 
     // Elimina claves de identidad
     func deleteIdentityKey(forKey key: String) -> Bool {
-        UserDefaults.standard.removeObject(forKey: "bitchat_\(key)")
+        UserDefaults.standard.removeObject(forKey: "bitkit_\(key)")
         return UserDefaults.standard.synchronize()
     }
 
@@ -64,8 +64,19 @@ class MiKeychain: KeychainManagerProtocol {
     }
 }
 
-// Paso 2: Implementar BitDelegate para manejar eventos
-class MiDelegate: BitDelegate {
+// Implementación básica de NostrIdentityBridge
+class MiNostrIdentityBridge: NostrIdentityBridge {
+    private let keychain: KeychainManagerProtocol
+
+    init(keychain: KeychainManagerProtocol) {
+        self.keychain = keychain
+    }
+
+    func getCurrentNostrIdentity() throws -> String {
+        // Placeholder para clave pública Nostr
+        return "npub1..."
+    }
+}
     // Se llama cuando se recibe un mensaje de chat
     func didReceiveMessage(_ message: BitMessage) {
         print("Mensaje recibido: \(message.content)")
@@ -117,32 +128,20 @@ class MiAppController {
 
     func configurarBit() {
         // Configurar identidad segura usando el keychain
-        let identityManager = SecureIdentityStateManager(keychain: keychain)
+        let identityManager = SecureIdentityStateManager(keychain)
 
-        // Configurar relays Nostr desde CSV o lista personalizada
-        let relays = loadRelaysFromCSV() // Implementa esta función para cargar relays
+        // Configurar bridge de identidad Nostr
+        let idBridge = MiNostrIdentityBridge(keychain: keychain)
 
-        // Configurar red privada (opcional)
-        let networkConfig = NetworkConfig.shared
-        if networkConfig.isPrivate {
-            // Usar relays personalizados y firma para red privada
-            let customRelays = relays.map { $0.url }
-            let appSignature = networkConfig.publicKey
-            // Verificar firma con clave privada (no almacenar privada)
-        } else {
-            // Modo público: compatible con bitchat
-            let customRelays: [String]? = nil
-            let appSignature: String? = nil
-        }
-
-        // Inicializar servicio BLE con configuración
+        // Inicializar servicio BLE
         bleService = BLEService(
             keychain: keychain,
-            identityManager: identityManager,
-            delegate: delegate,
-            customRelays: customRelays,
-            appSignature: appSignature
+            idBridge: idBridge,
+            identityManager: identityManager
         )
+
+        // Configurar delegate
+        bleService?.delegate = delegate
 
         // Configurar nickname visible para otros peers
         bleService?.myNickname = "MiUsuario"
@@ -151,12 +150,6 @@ class MiAppController {
         bleService?.startServices()
 
         print("bitKit configurado y listo")
-    }
-
-    private func loadRelaysFromCSV() -> [Relay] {
-        // Cargar relays desde /Users/antares500/PROYECT/bitchat/relays/online_relays_gps.csv
-        // Implementa parsing CSV
-        return []
     }
 
     func enviarMensaje() {
@@ -174,67 +167,6 @@ class MiAppController {
 ## Notas Adicionales
 
 - Esta configuración básica proporciona comunicación BLE mesh offline
-- Para comunicación global, añade BitNostr en el siguiente ejemplo
+- Para comunicación global, añade integración Nostr en el siguiente ejemplo
 - Asegúrate de manejar el ciclo de vida de los servicios (start/stop) apropiadamente
 - Los mensajes se encriptan automáticamente usando el protocolo Noise
-
-## Gestión de Relays Nostr
-
-Para configurar relays personalizados, carga la lista desde el CSV de bitchat:
-
-```swift
-struct Relay {
-    let url: String
-    let latitude: Double
-    let longitude: Double
-}
-
-func loadRelaysFromCSV() -> [Relay] {
-    let csvPath = "/Users/antares500/PROYECT/bitchat/relays/online_relays_gps.csv"
-    guard let content = try? String(contentsOfFile: csvPath) else { return [] }
-    let lines = content.split(separator: "\n").dropFirst() // Skip header
-    return lines.compactMap { line in
-        let components = line.split(separator: ",")
-        guard components.count == 3,
-              let lat = Double(components[1]),
-              let lon = Double(components[2]) else { return nil }
-        return Relay(url: String(components[0]), latitude: lat, longitude: lon)
-    }
-}
-```
-
-## Configuración de Red Privada
-
-Para crear una red privada con firma:
-
-```swift
-import secp256k1
-
-struct NetworkConfig {
-    var isPrivate: Bool = false
-    var networkName: String = ""
-    var publicKey: String = ""
-    var signature: String = ""
-    var version: Int = 1
-
-    mutating func regenerateKey() {
-        let privateKey = try! secp256k1.Signing.PrivateKey()
-        let publicKeyData = privateKey.publicKey.xonly.bytes
-        publicKey = publicKeyData.hexString
-        version += 1
-        let message = (networkName + "\(version)").data(using: .utf8)!
-        let signatureData = try! privateKey.signature(for: message).rawRepresentation
-        signature = signatureData.hexString
-    }
-
-    func verifySignature() -> Bool {
-        guard let publicKeyData = Data(hexString: publicKey),
-              let signatureData = Data(hexString: signature),
-              let sig = try? secp256k1.Signing.ECDSASignature(rawRepresentation: signatureData) else { return false }
-        let message = (networkName + "\(version)").data(using: .utf8)!
-        return secp256k1.Signing.PublicKey(xonlyBytes: publicKeyData).isValidSignature(sig, for: message)
-    }
-}
-```
-
-Esto permite redes aisladas con verificación de integridad.

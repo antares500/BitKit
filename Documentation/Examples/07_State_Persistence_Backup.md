@@ -446,13 +446,18 @@ class BackupManager {
 
     func createEncryptedBackup(_ data: BackupData) async throws -> Data {
         let jsonData = try JSONEncoder().encode(data)
-        // Encriptar con clave adicional
-        return jsonData // Placeholder
+        // Encriptar con clave derivada del keychain
+        let encryptionKey = try keychain.deriveKey(for: "backup-encryption", purpose: .encryption)
+        let sealedBox = try AES.GCM.seal(jsonData, using: encryptionKey)
+        return sealedBox.combined!
     }
 
     func decryptBackup(_ encryptedData: Data) async throws -> BackupData {
-        // Desencriptar y decodificar
-        return try JSONDecoder().decode(BackupData.self, from: encryptedData)
+        // Desencriptar con clave derivada del keychain
+        let encryptionKey = try keychain.deriveKey(for: "backup-encryption", purpose: .encryption)
+        let sealedBox = try AES.GCM.SealedBox(combined: encryptedData)
+        let decryptedData = try AES.GCM.open(sealedBox, using: encryptionKey)
+        return try JSONDecoder().decode(BackupData.self, from: decryptedData)
     }
 }
 
@@ -464,8 +469,23 @@ class MigrationManager {
     }
 
     func validateMigrationData(_ data: MigrationData) -> Bool {
-        // Validar integridad y frescura
-        return true // Placeholder
+        // Validar que los datos no sean demasiado antiguos (máximo 30 días)
+        let maxAge: TimeInterval = 30 * 24 * 60 * 60
+        guard Date().timeIntervalSince(data.timestamp) <= maxAge else {
+            return false
+        }
+        
+        // Validar que el deviceId no sea vacío
+        guard !data.deviceId.isEmpty else {
+            return false
+        }
+        
+        // Validar que haya al menos algunos datos para migrar
+        guard !data.conversations.isEmpty || !data.settings.isEmpty else {
+            return false
+        }
+        
+        return true
     }
 
     func performMigration(_ data: MigrationData) async throws {

@@ -1,11 +1,15 @@
 import BitLogger
 import Foundation
-import BitTor
 import BitCore
 #if os(iOS)
 import UIKit
 #elseif os(macOS)
 import AppKit
+#endif
+
+// Importar BitTor solo si está disponible
+#if canImport(BitTor)
+import BitTor
 #endif
 
 /// Directory of online Nostr relays with approximate GPS locations, used for geohash routing.
@@ -112,6 +116,7 @@ final class GeoRelayDirectory {
         Task.detached { [weak self] in
             guard let self else { return }
 
+            #if canImport(BitTor)
             let ready = await TorManager.shared.awaitReady()
             if !ready {
                 await self.handleFetchFailure(.torNotReady)
@@ -120,6 +125,10 @@ final class GeoRelayDirectory {
 
             do {
                 let (data, _) = try await TorURLSession.shared.session.data(for: request)
+            #else
+            do {
+                let (data, _) = try await URLSession.shared.data(for: request)
+            #endif
                 guard let text = String(data: data, encoding: .utf8) else {
                     await self.handleFetchFailure(.invalidData)
                     return

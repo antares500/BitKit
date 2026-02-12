@@ -30,7 +30,7 @@ Este ejemplo demuestra cómo integrar capacidades completas de multimedia en Bit
 ```swift
 import BitCore
 import BitMedia
-import BitBLE
+import BitTransport
 import AVFoundation
 import UIKit
 
@@ -45,41 +45,39 @@ class MediaManager {
     init(bleService: BLEService, mediaDelegate: MediaDelegate) {
         self.bleService = bleService
         self.mediaDelegate = mediaDelegate
-        self.voiceRecorder = VoiceRecorder()
+        self.voiceRecorder = VoiceRecorder.shared
     }
 
     // MARK: - Grabación de Voz
 
     // Iniciar grabación de voz
-    func startVoiceRecording() async throws {
+    func startVoiceRecording() throws {
         // Verificar permisos de micrófono
-        let permissionStatus = AVCaptureDevice.authorizationStatus(for: .audio)
-        guard permissionStatus == .authorized else {
-            throw MediaError.microphonePermissionDenied
+        #if os(iOS)
+        guard AVAudioSession.sharedInstance().recordPermission == .granted else {
+            throw NSError(domain: "MediaError", code: 1, userInfo: [NSLocalizedDescriptionKey: "Microphone permission denied"])
         }
+        #elseif os(macOS)
+        guard AVCaptureDevice.authorizationStatus(for: .audio) == .authorized else {
+            throw NSError(domain: "MediaError", code: 1, userInfo: [NSLocalizedDescriptionKey: "Microphone permission denied"])
+        }
+        #endif
 
-        // Configurar calidad de grabación
-        let settings = VoiceRecordingSettings(
-            format: .aac,
-            quality: .high,
-            sampleRate: 44100,
-            channels: 1
-        )
-
-        try await voiceRecorder.startRecording(with: settings)
+        // Iniciar grabación usando VoiceRecorder
+        let recordingURL = try voiceRecorder.startRecording()
+        currentRecording = recordingURL
         print("🎤 Grabación de voz iniciada")
     }
 
     // Detener grabación y obtener archivo
-    func stopVoiceRecording() async throws -> URL {
-        let audioURL = try await voiceRecorder.stopRecording()
-
-        // Optimizar para transmisión (comprimir si es necesario)
-        let optimizedURL = try await optimizeAudioForTransmission(audioURL)
-
-        currentRecording = optimizedURL
-        print("🎤 Grabación completada: \(optimizedURL.lastPathComponent)")
-        return optimizedURL
+    func stopVoiceRecording(completion: @escaping (URL?) -> Void) {
+        voiceRecorder.stopRecording { [weak self] url in
+            self?.currentRecording = url
+            if let url = url {
+                print("🎤 Grabación completada: \(url.lastPathComponent)")
+            }
+            completion(url)
+        }
     }
 
     // Cancelar grabación actual
@@ -92,34 +90,16 @@ class MediaManager {
     // MARK: - Procesamiento de Imágenes
 
     // Procesar imagen para envío
-    func processImageForSending(_ image: UIImage, maxSize: CGSize = CGSize(width: 1024, height: 1024)) async throws -> URL {
-        // Crear URL temporal para la imagen procesada
-        let tempURL = FileManager.default.temporaryDirectory
-            .appendingPathComponent(UUID().uuidString)
-            .appendingPathExtension("jpg")
-
-        // Comprimir y redimensionar
-        let compressedData = try await compressImage(image, maxSize: maxSize, quality: 0.8)
-
-        // Guardar archivo comprimido
-        try compressedData.write(to: tempURL)
-
-        // Generar thumbnail para vista previa
-        let thumbnailURL = try await generateThumbnail(for: tempURL, size: CGSize(width: 200, height: 200))
-
-        print("🖼️ Imagen procesada: \(tempURL.lastPathComponent)")
-        return tempURL
+    func processImageForSending(_ image: UIImage) throws -> URL {
+        // Usar MediaUtils para procesar la imagen
+        return try MediaUtils.processImage(image, maxDimension: 1024)
     }
 
-    // Comprimir imagen con parámetros específicos
-    private func compressImage(_ image: UIImage, maxSize: CGSize, quality: CGFloat) async throws -> Data {
-        // Redimensionar manteniendo aspect ratio
-        let resizedImage = resizeImage(image, to: maxSize)
-
-        // Comprimir a JPEG
-        guard let data = resizedImage.jpegData(compressionQuality: quality) else {
-            throw MediaError.compressionFailed
-        }
+    // Procesar imagen desde URL
+    func processImageForSending(at url: URL) throws -> URL {
+        // Usar MediaUtils para procesar la imagen desde archivo
+        return try MediaUtils.processImage(at: url, maxDimension: 1024)
+    }
 
         // Verificar tamaño máximo
         let maxFileSize = 2 * 1024 * 1024 // 2MB

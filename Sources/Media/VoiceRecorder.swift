@@ -54,24 +54,24 @@ final class VoiceRecorder: NSObject, AVAudioRecorderDelegate {
             }
 
             #if os(iOS)
-            guard AVAudioApplication.recordPermission == .granted else {
+            guard AVAudioSession.sharedInstance().recordPermission == .granted else {
                 throw RecorderError.microphoneAccessDenied
             }
             #if targetEnvironment(simulator)
             // allowBluetoothHFP is not available on iOS Simulator
-            try session.setCategory(
+            try AVAudioSession.sharedInstance().setCategory(
                 .playAndRecord,
                 mode: .default,
                 options: [.defaultToSpeaker, .allowBluetoothA2DP]
             )
             #else
-            try session.setCategory(
+            try AVAudioSession.sharedInstance().setCategory(
                 .playAndRecord,
                 mode: .default,
                 options: [.defaultToSpeaker, .allowBluetoothA2DP, .allowBluetooth]
             )
             #endif
-            try session.setActive(true, options: .notifyOthersOnDeactivation)
+            try AVAudioSession.sharedInstance().setActive(true, options: .notifyOthersOnDeactivation)
             #endif
             #if os(macOS)
             guard AVCaptureDevice.authorizationStatus(for: .audio) == .authorized else {

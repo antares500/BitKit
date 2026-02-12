@@ -32,7 +32,7 @@ Este ejemplo demuestra cómo coordinar múltiples transportes de comunicación (
 
 ```swift
 import BitCore
-import BitBLE
+import BitTransport
 import BitNostr
 import Network
 import Combine
@@ -293,8 +293,20 @@ class TransportCoordinator {
 
     // Encriptar mensaje
     private func encryptMessage(_ message: Message) async throws -> Message {
-        // Implementar encriptación
-        return message // Placeholder
+        // Generar clave de encriptación efímera
+        let key = SymmetricKey(size: .bits256)
+        let nonce = AES.GCM.Nonce()
+        
+        // Encriptar datos del mensaje
+        let sealedBox = try AES.GCM.seal(message.data, using: key, nonce: nonce)
+        let encryptedData = sealedBox.combined!
+        
+        // Incluir nonce en metadatos para desencriptación
+        var updatedMetadata = message.metadata
+        updatedMetadata["encryption"] = "AES-GCM"
+        updatedMetadata["nonce"] = nonce.withUnsafeBytes { Data($0) }.base64EncodedString()
+        
+        return Message(id: message.id, data: encryptedData, metadata: updatedMetadata)
     }
 
     // Dividir mensaje en chunks
@@ -375,13 +387,31 @@ class TransportCoordinator {
     }
 
     private func isWiFiAvailable() async -> Bool {
-        // Verificar conectividad WiFi
-        return true // Placeholder
+        // Verificar conectividad WiFi usando NWPathMonitor
+        let monitor = NWPathMonitor()
+        monitor.start(queue: DispatchQueue.global())
+        
+        return await withCheckedContinuation { continuation in
+            monitor.pathUpdateHandler = { path in
+                let isWiFi = path.usesInterfaceType(.wifi) && path.status == .satisfied
+                monitor.cancel()
+                continuation.resume(returning: isWiFi)
+            }
+        }
     }
 
     private func isCellularAvailable() async -> Bool {
-        // Verificar conectividad celular
-        return true // Placeholder
+        // Verificar conectividad celular usando NWPathMonitor
+        let monitor = NWPathMonitor()
+        monitor.start(queue: DispatchQueue.global())
+        
+        return await withCheckedContinuation { continuation in
+            monitor.pathUpdateHandler = { path in
+                let isCellular = path.usesInterfaceType(.cellular) && path.status == .satisfied
+                monitor.cancel()
+                continuation.resume(returning: isCellular)
+            }
+        }
     }
 
     private func setupTransportDelegation() {

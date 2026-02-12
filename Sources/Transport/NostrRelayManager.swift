@@ -2,10 +2,14 @@ import BitLogger
 import Foundation
 import Network
 import Combine
-import BitTor
 import BitCore
 import BitState
 import BitGeo
+
+// Importar BitTor solo si está disponible
+#if canImport(BitTor)
+import BitTor
+#endif
 
 /// Manages WebSocket connections to Nostr relays
 @MainActor
@@ -75,6 +79,42 @@ final class NostrRelayManager: ObservableObject {
     private var networkService: NetworkActivationService { NetworkActivationService.shared }
     private var shouldUseTor: Bool { networkService.userTorEnabled }
     
+    // Función helper para verificar si Tor está disponible y listo
+    private func isTorReady() async -> Bool {
+        #if canImport(BitTor)
+        return await TorManager.shared.awaitReady()
+        #else
+        return false
+        #endif
+    }
+    
+    // Función helper para verificar si Tor está en foreground
+    private func isTorForeground() -> Bool {
+        #if canImport(BitTor)
+        return TorManager.shared.isForeground()
+        #else
+        return false
+        #endif
+    }
+    
+    // Función helper para verificar si Tor está enforced
+    private func isTorEnforced() -> Bool {
+        #if canImport(BitTor)
+        return TorManager.shared.torEnforced
+        #else
+        return false
+        #endif
+    }
+    
+    // Función helper para verificar si Tor está listo (síncrona)
+    private func isTorReadySync() -> Bool {
+        #if canImport(BitTor)
+        return TorManager.shared.isReady
+        #else
+        return false
+        #endif
+    }
+    
     // Exponential backoff configuration
     private let initialBackoffInterval: TimeInterval = TransportConfig.shared.nostrRelayInitialBackoffSeconds
     private let maxBackoffInterval: TimeInterval = TransportConfig.shared.nostrRelayMaxBackoffSeconds
@@ -117,7 +157,7 @@ final class NostrRelayManager: ObservableObject {
         if shouldUseTor {
             // Ensure Tor is started early and wait for readiness off-main; then hop back to connect.
             Task.detached {
-                let ready = await TorManager.shared.awaitReady()
+                let ready = await self.isTorReady()
                 await MainActor.run {
                     if !ready {
                         BitLogger.error("❌ Tor not ready; aborting relay connections (fail-closed)", category: .session)
@@ -130,9 +170,9 @@ final class NostrRelayManager: ObservableObject {
                 }
             }
         } else {
-            BitLogger.debug("🌐 Connecting to \(self.relays.count) Nostr relays (direct)", category: .session)
+            BitLogger.debug("🌐 Connecting to \(self.relays.count) Nostr relays", category: .session)
             for relay in self.relays {
-                connectToRelay(relay.url)
+                self.connectToRelay(relay.url)
             }
         }
     }
@@ -156,11 +196,11 @@ final class NostrRelayManager: ObservableObject {
         guard networkService.activationAllowed else { return }
         let targets = allowedRelayList(from: relayUrls)
         guard !targets.isEmpty else { return }
-        if shouldUseTor && TorManager.shared.torEnforced && !TorManager.shared.isReady {
+        if shouldUseTor && self.isTorEnforced() && !self.isTorReadySync() {
             // Defer until Tor is fully ready; avoid queuing connection attempts early
             Task.detached { [weak self] in
                 guard let self = self else { return }
-                let ready = await TorManager.shared.awaitReady()
+                let ready = await self.isTorReady()
                 await MainActor.run { if ready { self.ensureConnections(to: relayUrls) } }
             }
             return
@@ -265,7 +305,7 @@ final class NostrRelayManager: ObservableObject {
             }
         }
         subscribeCoalesce[id] = now
-        if shouldUseTor && TorManager.shared.torEnforced && !TorManager.shared.isReady {
+        if shouldUseTor && self.isTorEnforced() && !self.isTorReadySync() {
             // Defer subscription setup until Tor is ready; avoid queuing subs early
             Task.detached { [weak self] in
                 guard let self = self else { return }
@@ -423,7 +463,7 @@ final class NostrRelayManager: ObservableObject {
         }
 
         // Avoid initiating connections while app is backgrounded; we'll reconnect on foreground
-        if shouldUseTor && TorManager.shared.torEnforced && !TorManager.shared.isForeground() {
+        if shouldUseTor && self.isTorEnforced() && !self.isTorForeground() {
             return
         }
         
@@ -435,22 +475,9 @@ final class NostrRelayManager: ObservableObject {
             return
         }
         
-        // Attempting to connect to Nostr relay via the proxied session
+        // Attempting to connect to Nostr relay
         
-        // If Tor is enforced but not ready, delay connection until it is.
-        if shouldUseTor && TorManager.shared.torEnforced && !TorManager.shared.isReady {
-            Task.detached { [weak self] in
-                guard let self = self else { return }
-                let ready = await TorManager.shared.awaitReady()
-                await MainActor.run {
-                    if ready { self.connectToRelay(urlString) }
-                    else { BitLogger.error("❌ Tor not ready; skipping connection to \(urlString)", category: .session) }
-                }
-            }
-            return
-        }
-        
-        let session = TorURLSession.shared.session
+        let session = URLSession.shared
         let task = session.webSocketTask(with: url)
         
         connections[urlString] = task

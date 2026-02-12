@@ -95,7 +95,7 @@ import Foundation
 import CryptoKit
 import BitCore
 
-protocol SecureIdentityStateManagerProtocol {
+public protocol SecureIdentityStateManagerProtocol {
     // MARK: Secure Loading/Saving
     func forceSave()
     
@@ -133,12 +133,20 @@ protocol SecureIdentityStateManagerProtocol {
     func setVerified(fingerprint: String, verified: Bool)
     func isVerified(fingerprint: String) -> Bool
     func getVerifiedFingerprints() -> Set<String>
+    
+    // MARK: Backup and Restore
+    func exportBackup() throws -> Data
+    func importBackup(_ data: Data) throws
+    func generateInitialIdentity() throws -> String
+    
+    // MARK: Nostr Identity
+    func getCurrentNostrIdentity() throws -> String
 }
 
 /// Singleton manager for secure identity state persistence and retrieval.
 /// Provides thread-safe access to identity mappings with encryption at rest.
 /// All identity data is stored encrypted in the device Keychain for security.
-final class SecureIdentityStateManager: SecureIdentityStateManagerProtocol {
+public final class SecureIdentityStateManager: SecureIdentityStateManagerProtocol, NostrIdentityBridge {
     private let keychain: KeychainManagerProtocol
     private let cacheKey = "bitchat.identityCache.v2"
     private let encryptionKeyName = "identityCacheEncryptionKey"
@@ -159,7 +167,7 @@ final class SecureIdentityStateManager: SecureIdentityStateManagerProtocol {
     // Encryption key
     private let encryptionKey: SymmetricKey
     
-    init(_ keychain: KeychainManagerProtocol) {
+    public init(_ keychain: KeychainManagerProtocol) {
         self.keychain = keychain
         
         // Generate or retrieve encryption key from keychain
@@ -237,14 +245,14 @@ final class SecureIdentityStateManager: SecureIdentityStateManagerProtocol {
     }
     
     // Force immediate save (for app termination)
-    func forceSave() {
+    public func forceSave() {
         saveTimer?.invalidate()
         performSave()
     }
     
     // MARK: - Social Identity Management
     
-    func getSocialIdentity(for fingerprint: String) -> SocialIdentity? {
+    public func getSocialIdentity(for fingerprint: String) -> SocialIdentity? {
         queue.sync {
             return cache.socialIdentities[fingerprint]
         }
@@ -258,7 +266,7 @@ final class SecureIdentityStateManager: SecureIdentityStateManagerProtocol {
     ///   - noisePublicKey: Noise static public key data
     ///   - signingPublicKey: Optional Ed25519 signing public key for authenticating public messages
     ///   - claimedNickname: Optional latest claimed nickname to persist into social identity
-    func upsertCryptographicIdentity(fingerprint: String, noisePublicKey: Data, signingPublicKey: Data?, claimedNickname: String? = nil) {
+    public func upsertCryptographicIdentity(fingerprint: String, noisePublicKey: Data, signingPublicKey: Data?, claimedNickname: String? = nil) {
         queue.async(flags: .barrier) {
             let now = Date()
             if var existing = self.cryptographicIdentities[fingerprint] {
@@ -322,7 +330,7 @@ final class SecureIdentityStateManager: SecureIdentityStateManagerProtocol {
     }
 
     /// Find cryptographic identities whose fingerprint prefix matches a peerID (16-hex) short ID
-    func getCryptoIdentitiesByPeerIDPrefix(_ peerID: PeerID) -> [CryptographicIdentity] {
+    public func getCryptoIdentitiesByPeerIDPrefix(_ peerID: PeerID) -> [CryptographicIdentity] {
         queue.sync {
             // Defensive: ensure hex and correct length
             guard peerID.isShort else { return [] }
@@ -330,7 +338,7 @@ final class SecureIdentityStateManager: SecureIdentityStateManagerProtocol {
         }
     }
     
-    func updateSocialIdentity(_ identity: SocialIdentity) {
+    public func updateSocialIdentity(_ identity: SocialIdentity) {
         queue.async(flags: .barrier) {
             self.cache.socialIdentities[identity.fingerprint] = identity
             
@@ -358,7 +366,7 @@ final class SecureIdentityStateManager: SecureIdentityStateManagerProtocol {
     
     // MARK: - Favorites Management
     
-    func getFavorites() -> Set<String> {
+    public func getFavorites() -> Set<String> {
         queue.sync {
             let favorites = cache.socialIdentities.values
                 .filter { $0.isFavorite }
@@ -367,7 +375,7 @@ final class SecureIdentityStateManager: SecureIdentityStateManagerProtocol {
         }
     }
     
-    func setFavorite(_ fingerprint: String, isFavorite: Bool) {
+    public func setFavorite(_ fingerprint: String, isFavorite: Bool) {
         queue.async(flags: .barrier) {
             if var identity = self.cache.socialIdentities[fingerprint] {
                 identity.isFavorite = isFavorite
@@ -389,7 +397,7 @@ final class SecureIdentityStateManager: SecureIdentityStateManagerProtocol {
         }
     }
     
-    func isFavorite(fingerprint: String) -> Bool {
+    public func isFavorite(fingerprint: String) -> Bool {
         queue.sync {
             return cache.socialIdentities[fingerprint]?.isFavorite ?? false
         }
@@ -397,13 +405,13 @@ final class SecureIdentityStateManager: SecureIdentityStateManagerProtocol {
     
     // MARK: - Blocked Users Management
     
-    func isBlocked(fingerprint: String) -> Bool {
+    public func isBlocked(fingerprint: String) -> Bool {
         queue.sync {
             return cache.socialIdentities[fingerprint]?.isBlocked ?? false
         }
     }
     
-    func setBlocked(_ fingerprint: String, isBlocked: Bool) {
+    public func setBlocked(_ fingerprint: String, isBlocked: Bool) {
         BitLogger.info("User \(isBlocked ? "blocked" : "unblocked"): \(fingerprint)", category: .security)
         
         queue.async(flags: .barrier) {
@@ -432,13 +440,13 @@ final class SecureIdentityStateManager: SecureIdentityStateManagerProtocol {
 
     // MARK: - Geohash (Nostr) Blocking
     
-    func isNostrBlocked(pubkeyHexLowercased: String) -> Bool {
+    public func isNostrBlocked(pubkeyHexLowercased: String) -> Bool {
         queue.sync {
             return cache.blockedNostrPubkeys.contains(pubkeyHexLowercased.lowercased())
         }
     }
     
-    func setNostrBlocked(_ pubkeyHexLowercased: String, isBlocked: Bool) {
+    public func setNostrBlocked(_ pubkeyHexLowercased: String, isBlocked: Bool) {
         let key = pubkeyHexLowercased.lowercased()
         queue.async(flags: .barrier) {
             if isBlocked {
@@ -450,13 +458,13 @@ final class SecureIdentityStateManager: SecureIdentityStateManagerProtocol {
         }
     }
     
-    func getBlockedNostrPubkeys() -> Set<String> {
+    public func getBlockedNostrPubkeys() -> Set<String> {
         queue.sync { cache.blockedNostrPubkeys }
     }
     
     // MARK: - Ephemeral Session Management
     
-    func registerEphemeralSession(peerID: PeerID, handshakeState: HandshakeState = .none) {
+    public func registerEphemeralSession(peerID: PeerID, handshakeState: HandshakeState = .none) {
         queue.async(flags: .barrier) {
             self.ephemeralSessions[peerID] = EphemeralIdentity(
                 peerID: peerID,
@@ -466,7 +474,7 @@ final class SecureIdentityStateManager: SecureIdentityStateManagerProtocol {
         }
     }
     
-    func updateHandshakeState(peerID: PeerID, state: HandshakeState) {
+    public func updateHandshakeState(peerID: PeerID, state: HandshakeState) {
         queue.async(flags: .barrier) {
             self.ephemeralSessions[peerID]?.handshakeState = state
             
@@ -480,7 +488,7 @@ final class SecureIdentityStateManager: SecureIdentityStateManagerProtocol {
     
     // MARK: - Cleanup
     
-    func clearAllIdentityData() {
+    public func clearAllIdentityData() {
         BitLogger.warning("Clearing all identity data", category: .security)
         
         queue.async(flags: .barrier) {
@@ -494,7 +502,7 @@ final class SecureIdentityStateManager: SecureIdentityStateManagerProtocol {
         }
     }
     
-    func removeEphemeralSession(peerID: PeerID) {
+    public func removeEphemeralSession(peerID: PeerID) {
         queue.async(flags: .barrier) {
             self.ephemeralSessions.removeValue(forKey: peerID)
         }
@@ -502,7 +510,7 @@ final class SecureIdentityStateManager: SecureIdentityStateManagerProtocol {
     
     // MARK: - Verification
     
-    func setVerified(fingerprint: String, verified: Bool) {
+    public func setVerified(fingerprint: String, verified: Bool) {
         BitLogger.info("Fingerprint \(verified ? "verified" : "unverified"): \(fingerprint)", category: .security)
         
         queue.async(flags: .barrier) {
@@ -522,13 +530,13 @@ final class SecureIdentityStateManager: SecureIdentityStateManagerProtocol {
         }
     }
     
-    func isVerified(fingerprint: String) -> Bool {
+    public func isVerified(fingerprint: String) -> Bool {
         queue.sync {
             return cache.verifiedFingerprints.contains(fingerprint)
         }
     }
     
-    func getVerifiedFingerprints() -> Set<String> {
+    public func getVerifiedFingerprints() -> Set<String> {
         queue.sync {
             return cache.verifiedFingerprints
         }
@@ -536,14 +544,14 @@ final class SecureIdentityStateManager: SecureIdentityStateManagerProtocol {
     
     // MARK: - Backup/Restore
     
-    func exportBackup() throws -> Data {
+    public func exportBackup() throws -> Data {
         return try queue.sync {
             let encoder = JSONEncoder()
             return try encoder.encode(cache)
         }
     }
     
-    func importBackup(_ data: Data) throws {
+    public func importBackup(_ data: Data) throws {
         let decoder = JSONDecoder()
         let importedCache = try decoder.decode(IdentityCache.self, from: data)
         queue.async(flags: .barrier) {
@@ -554,7 +562,7 @@ final class SecureIdentityStateManager: SecureIdentityStateManagerProtocol {
     
     // MARK: - Onboarding
     
-    func generateInitialIdentity() throws -> String {
+    public func generateInitialIdentity() throws -> String {
         // Generate a new identity for first-time users
         let identity = SocialIdentity(
             fingerprint: try CryptoUtils.generateFingerprint(),
@@ -572,5 +580,16 @@ final class SecureIdentityStateManager: SecureIdentityStateManagerProtocol {
         }
         
         return identity.fingerprint
+    }
+    
+    // MARK: - Nostr Identity Bridge
+    
+    public func getCurrentNostrIdentity() throws -> String {
+        // For now, return the first available cryptographic identity's fingerprint
+        // In a real implementation, this would be the user's Nostr public key
+        guard let firstIdentity = cryptographicIdentities.values.first else {
+            throw NSError(domain: "SecureIdentityStateManager", code: 1, userInfo: [NSLocalizedDescriptionKey: "No cryptographic identity available"])
+        }
+        return firstIdentity.fingerprint
     }
 }

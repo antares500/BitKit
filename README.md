@@ -104,42 +104,160 @@ let communications = BitCommunications(
 let communications = BitCommunications()  // Usa relays y firmas de bitchat
 ```
 
-### Configuración Básica
+## Ejemplos de Uso
 
-Para comenzar con bitKit, sigue nuestro [Ejemplo 01: Configuración Básica](Documentation/Examples/01_Basic_Configuration.md) que cubre:
-- Implementación de protocolos requeridos (KeychainManagerProtocol, BitDelegate)
-- Configuración inicial de servicios
-- Manejo de eventos básicos
+### Inicialización Básica
 
-### Guía Completa de Implementación
+```swift
+import BitCore
+import BitCommunications
 
-Explora nuestras guías detalladas para todas las funcionalidades:
+// Inicializar servicios básicos
+let logger = BitLogger()
+let core = BitCore(logger: logger)
+let communications = BitCommunications(core: core)
 
-#### 🚀 **Primeros Pasos**
-- **[01: Configuración Básica](Documentation/Examples/01_Basic_Configuration.md)**: Fundamentos y setup inicial
-- **[02: BLE Mesh Networks](Documentation/Examples/02_BLE_Mesh_Configuration.md)**: Redes mesh offline con enrutamiento inteligente
-- **[03: Nostr Integration](Documentation/Examples/03_Nostr_Integration.md)**: Comunicación global a través de relays públicos
-- **[04: Geolocalización y Mensajería Local](Documentation/Examples/04_Geolocation_Local_Messaging.md)**: Mensajería basada en ubicación
-- **[05: Características Avanzadas](Documentation/Examples/05_Advanced_Features_Customization.md)**: Arquitectura extensible
+// Configurar delegados para eventos
+communications.delegate = self
+```
 
-#### 🎵 **Multimedia y Contenido**
-- **[06: Manejo de Multimedia](Documentation/Examples/06_Multimedia_Handling.md)**: Voz, imágenes, video y streaming
-- **[07: Persistencia de Estado y Backup](Documentation/Examples/07_State_Persistence_Backup.md)**: Gestión de identidad y respaldo seguro
-- **[08: Chat Grupal y Moderación](Documentation/Examples/08_Group_Chat_Moderation.md)**: Grupos, moderación y analytics
+### Enviar un Mensaje
 
-#### 🔐 **Seguridad y Privacidad**
-- **[09: Seguridad Avanzada y Tor](Documentation/Examples/09_Advanced_Security_Tor.md)**: Anonimato, verificación de identidad
-- **[10: Coordinación de Transportes](Documentation/Examples/10_Transport_Coordination.md)**: Enrutamiento inteligente y failover
-- **[11: Transferencias de Archivos y Streaming](Documentation/Examples/11_File_Transfers_Streaming.md)**: Archivos grandes y streaming en tiempo real
-- **[12: Verificación de Identidad y Confianza](Documentation/Examples/12_Identity_Verification_Trust.md)**: Sistema de confianza distribuido
+```swift
+import BitCommunications
 
-#### 📊 **Analytics y Comunidad**
-- **[13: Analytics, Métricas y Comunidad](Documentation/Examples/13_Analytics_Metrics_Community.md)**: Insights y dashboards
+// Enviar mensaje privado
+let messageID = communications.sendMessage(
+    content: "Hola, mundo!",
+    to: recipientPeerID,
+    options: .init(encrypt: true, sign: true)
+)
 
-#### 🔧 **Utilidades Avanzadas**
-- **[14: App Completa Pluribus](Documentation/Examples/14_Pluribus_Complete_App.md)**: Integración completa de todos los módulos
-- **[15: Logging y Monitoreo Avanzado](Documentation/Examples/15_Logging_Monitoring.md)**: Sistema de logs estructurado y monitoreo
-- **[16: Routing Inteligente y Failover](Documentation/Examples/16_Routing_Intelligent_Failover.md)**: Enrutamiento automático y recuperación de fallos
+// Enviar a grupo
+communications.sendGroupMessage(
+    content: "Mensaje grupal",
+    to: groupID
+)
+```
+
+### Manejo de Multimedia
+
+```swift
+import BitMedia
+
+// Grabar voz
+let recorder = VoiceRecorder()
+try await recorder.requestPermission()
+let audioURL = try recorder.startRecording()
+
+// Enviar archivo
+communications.sendFile(
+    url: audioURL,
+    to: peerID,
+    metadata: .init(type: .audio)
+)
+```
+
+### Geolocalización
+
+```swift
+import BitGeo
+
+// Crear canal geo
+let geoChannel = GeoChannel(
+    center: CLLocationCoordinate2D(latitude: 40.7128, longitude: -74.0060),
+    radius: 1000
+)
+
+// Mensaje local
+communications.sendGeoMessage(
+    content: "Evento cercano",
+    in: geoChannel
+)
+```
+
+Para más ejemplos detallados, consulta la carpeta [Documentation/Examples/](Documentation/Examples/):
+
+1. [01 - Configuración Básica](Documentation/Examples/01_Basic_Configuration.md)
+2. [02 - Configuración BLE Mesh](Documentation/Examples/02_BLE_Mesh_Configuration.md)
+3. [03 - Integración Nostr](Documentation/Examples/03_Nostr_Integration.md)
+4. [04 - Geolocalización y Mensajería Local](Documentation/Examples/04_Geolocation_Local_Messaging.md)
+5. [05 - Características Avanzadas y Personalización](Documentation/Examples/05_Advanced_Features_Customization.md)
+6. [06 - Manejo de Multimedia](Documentation/Examples/06_Multimedia_Handling.md)
+7. [07 - Persistencia de Estado y Backup](Documentation/Examples/07_State_Persistence_Backup.md)
+8. [08 - Chat Grupal y Moderación](Documentation/Examples/08_Group_Chat_Moderation.md)
+9. [09 - Seguridad Avanzada con Tor](Documentation/Examples/09_Advanced_Security_Tor.md)
+10. [10 - Coordinación de Transportes](Documentation/Examples/10_Transport_Coordination.md)
+11. [11 - Transferencias de Archivos y Streaming](Documentation/Examples/11_File_Transfers_Streaming.md)
+12. [12 - Verificación de Identidad y Confianza](Documentation/Examples/12_Identity_Verification_Trust.md)
+13. [13 - Analytics y Métricas de Comunidad](Documentation/Examples/13_Analytics_Metrics_Community.md)
+14. [14 - Logging y Monitoreo](Documentation/Examples/15_Logging_Monitoring.md)
+15. [15 - Enrutamiento Inteligente y Failover](Documentation/Examples/16_Routing_Intelligent_Failover.md)
+
+## API Reference
+
+### BitCommunications
+
+Clase principal para coordinar comunicaciones P2P.
+
+```swift
+public class BitCommunications {
+    public init(core: BitCore, transports: [Transport])
+    public func start() async throws
+    public func stop() async
+    public func sendMessage(_ content: String, to peerID: PeerID, options: MessageOptions) -> MessageID
+    public func sendGroupMessage(_ content: String, to groupID: GroupID) -> MessageID
+    public func sendFile(url: URL, to peerID: PeerID, metadata: FileMetadata) async throws -> TransferID
+}
+```
+
+### BitCore
+
+Núcleo con utilidades básicas.
+
+```swift
+public class BitCore {
+    public init(logger: BitLogger)
+    public var encryption: EncryptionProtocol { get }
+    public var keyManager: KeyManager { get }
+}
+```
+
+### BitMedia
+
+Manejo de multimedia.
+
+```swift
+public class VoiceRecorder {
+    public static let shared = VoiceRecorder()
+    public func requestPermission() async -> Bool
+    public func startRecording() throws -> URL
+    public func stopRecording() -> URL?
+}
+```
+
+Para documentación completa de API, genera docs con DocC o consulta el código fuente.
+
+### Configuración de Redes
+
+bitKit permite crear **tu propia red** o **incluirte en la red bitchat** existente. Ambas opciones son compatibles con la última versión de bitchat si el usuario lo necesita.
+
+### Mi Propia Red
+- Configura aislamiento usando relays Nostr específicos o firmas de app personalizadas.
+- Los mensajes se firman con claves únicas, asegurando que solo apps autorizadas los procesen.
+- **Aviso**: Debes cumplir con los estándares de la red original marcados por Jack Dorsey y adaptarte a sus actualizaciones. bitchat no leerá mensajes de redes propias sin configuración explícita.
+
+### Incluirme en la Red Bit
+- Usa las mismas APIs y dependencias que bitchat para interoperabilidad completa.
+- bitKit se alinea con la última versión de bitchat, permitiendo inclusión en su red mediante configuración compartida (ej. relays públicos o claves compatibles).
+
+Ejemplo de configuración para compatibilidad:
+```swift
+// Para red propia: configura relays y firmas personalizadas
+let communications = BitCommunications(
+    customRelays: ["tu-relay.nostr"], 
+    appSignature: "tu-firma-unica"
+)
 
 ## Requisitos
 
@@ -167,6 +285,16 @@ Añade a tu `Info.plist`:
 2. Crea una rama para tu feature
 3. Añade tests
 4. Envía un Pull Request
+
+## Ejecutar Tests
+
+Para ejecutar los tests del proyecto:
+
+```bash
+swift test
+```
+
+Esto ejecutará todos los tests definidos en la carpeta `Tests/`, incluyendo pruebas para las clases principales como `KeychainManager`, `NoiseEncryptionService`, `MessageRouter`, etc.
 
 ## Licencia
 

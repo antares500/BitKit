@@ -34,7 +34,7 @@ Este ejemplo muestra cómo implementar un sistema completo de analytics y métri
 
 ```swift
 import BitCore
-import BitBLE
+import BitTransport
 import BitNostr
 import Combine
 import Charts
@@ -499,7 +499,19 @@ class PerformanceMonitor {
 class PrivacyManager {
     func shouldTrackEvent(_ event: AnalyticsEvent) -> Bool {
         // Verificar preferencias de privacidad del usuario
-        return true // Placeholder
+        // En implementación real, consultar configuración de privacidad
+        let privacySettings = UserDefaults.standard.dictionary(forKey: "privacySettings") as? [String: Bool] ?? [:]
+        
+        switch event {
+        case .messageSent, .messageReceived:
+            return privacySettings["trackMessages"] ?? true
+        case .connectionEstablished, .connectionLost:
+            return privacySettings["trackConnections"] ?? true
+        case .errorOccurred:
+            return privacySettings["trackErrors"] ?? true
+        case .performanceMetric:
+            return privacySettings["trackPerformance"] ?? false
+        }
     }
 
     func auditCompliance() async -> PrivacyAuditResult {

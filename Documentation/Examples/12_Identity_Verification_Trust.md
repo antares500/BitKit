@@ -298,8 +298,8 @@ class TrustManager {
 
     // Obtener identidad actual
     private func getCurrentPeerID() -> PeerID {
-        // Implementar obtención del PeerID actual
-        return PeerID(data: Data([0x01, 0x02, 0x03, 0x04])) // Placeholder
+        // En implementación real, obtener del estado de identidad
+        return PeerID(str: "current-peer-\(UUID().uuidString.prefix(8))")!
     }
 
     // Broadcast de solicitud de attestations
@@ -348,13 +348,16 @@ class IdentityManager {
     }
 
     func generateZKProof(for challenge: ZKChallenge) async throws -> ZKProof {
-        // Implementar zero-knowledge proof
-        return ZKProof(data: Data()) // Placeholder
+        // Implementar zero-knowledge proof básico
+        // En producción, usar una implementación ZK real como Bulletproofs
+        let proofData = challenge.data + Data([0x01, 0x02, 0x03]) // Simulación
+        return ZKProof(data: proofData)
     }
 
     func verifyZKProof(_ proof: ZKProof, for challenge: ZKChallenge) async throws -> Bool {
-        // Implementar verificación ZK
-        return true // Placeholder
+        // Verificar proof ZK básico
+        let expectedData = challenge.data + Data([0x01, 0x02, 0x03])
+        return proof.data == expectedData
     }
 
     private func generateKeyPair() async throws -> KeyPair {
@@ -363,13 +366,16 @@ class IdentityManager {
     }
 
     private func signData(_ data: Data, with peerID: PeerID) async throws -> Data {
-        // Implementar firma
-        return Data() // Placeholder
+        // Obtener clave privada (en implementación real, del keychain)
+        let privateKey = P256.Signing.PrivateKey()
+        let signature = try privateKey.signature(for: data)
+        return signature.rawRepresentation
     }
 
     private func verifySignature(_ signature: Data, for data: Data, publicKey: P256.Signing.PublicKey) async throws -> Bool {
-        // Implementar verificación
-        return true // Placeholder
+        // Verificar firma
+        let signature = try P256.Signing.ECDSASignature(rawRepresentation: signature)
+        return publicKey.isValidSignature(signature, for: data)
     }
 }
 
@@ -382,13 +388,15 @@ class AttestationManager {
         evidence: Data?,
         confidence: Double
     ) async throws -> Attestation {
-        let issuer = PeerID(data: Data([0x01, 0x02, 0x03, 0x04])) // Current peer
+        let issuer = PeerID(str: "current-issuer-\(UUID().uuidString.prefix(8))")! // Current peer
+        let issuerPublicKey = P256.Signing.PublicKey() // En implementación real, obtener del keychain
         let timestamp = Date()
 
         let attestation = Attestation(
             id: AttestationID(),
             subject: subject,
             issuer: issuer,
+            issuerPublicKey: issuerPublicKey,
             type: type,
             claim: claim,
             evidence: evidence,
@@ -419,13 +427,18 @@ class AttestationManager {
     }
 
     private func signAttestation(_ attestation: Attestation) async throws -> Data {
-        // Implementar firma
-        return Data() // Placeholder
+        // Firmar attestation con clave privada
+        let data = try attestation.encoded()
+        let privateKey = P256.Signing.PrivateKey()
+        let signature = try privateKey.signature(for: data)
+        return signature.rawRepresentation
     }
 
     private func verifyAttestationSignature(_ attestation: Attestation) async throws -> Bool {
-        // Implementar verificación
-        return true // Placeholder
+        // Verificar firma de attestation
+        let data = try attestation.encoded()
+        let signature = try P256.Signing.ECDSASignature(rawRepresentation: attestation.signature)
+        return attestation.issuerPublicKey.isValidSignature(signature, for: data)
     }
 }
 
@@ -465,8 +478,44 @@ class TrustEvaluator {
     }
 
     func calculateTransitiveTrust(from source: PeerID, to target: PeerID, maxHops: Int) async -> TrustLevel {
-        // Implementar cálculo de confianza transitiva
-        return .unknown // Placeholder
+        // Implementar cálculo de confianza transitiva usando BFS
+        var visited = Set<PeerID>()
+        var queue: [(peer: PeerID, hops: Int, trust: TrustLevel)] = [(source, 0, .trusted)]
+        
+        while !queue.isEmpty {
+            let (currentPeer, hops, currentTrust) = queue.removeFirst()
+            
+            if currentPeer == target {
+                return currentTrust
+            }
+            
+            if hops >= maxHops || visited.contains(currentPeer) {
+                continue
+            }
+            
+            visited.insert(currentPeer)
+            
+            // Obtener conexiones del peer actual (en implementación real, de la red)
+            let connections = await getPeerConnections(currentPeer)
+            
+            for connection in connections {
+                if !visited.contains(connection.peer) {
+                    let transitiveTrust = min(currentTrust, connection.trust)
+                    queue.append((connection.peer, hops + 1, transitiveTrust))
+                }
+            }
+        }
+        
+        return .unknown
+    }
+
+    private func getPeerConnections(_ peerID: PeerID) async -> [(peer: PeerID, trust: TrustLevel)] {
+        // En implementación real, obtener conexiones de la red social
+        // Aquí devolver conexiones de ejemplo
+        return [
+            (PeerID(str: "connection-1-\(UUID().uuidString.prefix(8))")!, .trusted),
+            (PeerID(str: "connection-2-\(UUID().uuidString.prefix(8))")!, .basic)
+        ]
     }
 
     private func calculateAttestationWeight(_ attestation: Attestation) -> Double {
@@ -565,8 +614,10 @@ struct Identity {
     let createdAt: Date
 
     func encoded() throws -> Data {
-        // Implementar codificación
-        return Data() // Placeholder
+        // Codificar identidad como JSON
+        let encoder = JSONEncoder()
+        encoder.dateEncodingStrategy = .iso8601
+        return try encoder.encode(self)
     }
 }
 
@@ -581,12 +632,20 @@ struct Attestation {
     let id: AttestationID
     let subject: PeerID
     let issuer: PeerID
+    let issuerPublicKey: P256.Signing.PublicKey
     let type: AttestationType
     let claim: String
     let evidence: Data?
     let confidence: Double
     let timestamp: Date
     var signature: Data
+
+    func encoded() throws -> Data {
+        // Codificar attestation como JSON
+        let encoder = JSONEncoder()
+        encoder.dateEncodingStrategy = .iso8601
+        return try encoder.encode(self)
+    }
 }
 
 struct AttestationID: Hashable {
@@ -667,8 +726,10 @@ struct MaliciousBehaviorEvidence {
     let confidence: Double
 
     func encoded() throws -> Data {
-        // Implementar codificación
-        return Data() // Placeholder
+        // Codificar evidencia como JSON
+        let encoder = JSONEncoder()
+        encoder.dateEncodingStrategy = .iso8601
+        return try encoder.encode(self)
     }
 }
 
@@ -787,8 +848,8 @@ class TrustViewController: UIViewController {
 
     @objc func verifyPeer() {
         // Mostrar lista de peers para verificar
-        // Por simplicidad, usar un peer hardcodeado
-        let peerID = PeerID(data: Data([0x01, 0x02, 0x03, 0x04]))! // Placeholder
+        // Por simplicidad, usar un peer de ejemplo válido
+        let peerID = PeerID(str: "verify-peer-\(UUID().uuidString.prefix(8))")!
 
         Task {
             do {
@@ -817,7 +878,7 @@ class TrustViewController: UIViewController {
 
     @objc func createAttestation() {
         // Mostrar UI para crear attestation
-        let peerID = PeerID(data: Data([0x01, 0x02, 0x03, 0x04]))! // Placeholder
+        let peerID = PeerID(str: "attest-peer-\(UUID().uuidString.prefix(8))")!
 
         Task {
             do {
@@ -870,8 +931,23 @@ class TrustViewController: UIViewController {
     private func receiveIdentityProofFromPeer(_ peerID: PeerID) async -> IdentityProof? {
         // En una implementación real, esto esperaría un mensaje del peer con el proof
         // Por ejemplo, suscribirse a mensajes de tipo "identity_proof"
-        // Aquí simulamos recepción (reemplazar con lógica real)
-        return nil // Placeholder: implementar recepción real
+        // Aquí simulamos recepción creando un proof de ejemplo
+        let identity = Identity(
+            peerID: peerID,
+            displayName: "Peer Example",
+            publicKey: P256.Signing.PublicKey(),
+            additionalInfo: [:],
+            createdAt: Date()
+        )
+        
+        let proofOfWork = ProofOfWork(challenge: Data([0x01, 0x02]), nonce: 42, difficulty: .standard)
+        
+        return IdentityProof(
+            identity: identity,
+            proofOfWork: proofOfWork,
+            timestamp: Date(),
+            signature: Data()
+        )
     }
 }
 

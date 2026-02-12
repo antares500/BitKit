@@ -32,7 +32,7 @@ Este ejemplo extiende la configuración básica para implementar una red mesh Bl
 
 ```swift
 import BitCore
-import BitBLE
+import BitTransport
 import BitState
 import Combine
 
@@ -41,13 +41,15 @@ class BLEMeshController {
     private let keychain: MiKeychain
     private let delegate: MiDelegate
     private let identityManager: SecureIdentityStateManager
+    private let idBridge: MiNostrIdentityBridge
     private var bleService: BLEService?
     private var cancellables = Set<AnyCancellable>()
 
     init(keychain: MiKeychain, delegate: MiDelegate) {
         self.keychain = keychain
         self.delegate = delegate
-        self.identityManager = SecureIdentityStateManager(keychain: keychain)
+        self.identityManager = SecureIdentityStateManager(keychain)
+        self.idBridge = MiNostrIdentityBridge(keychain: keychain)
     }
 
     // Configurar y iniciar BLE Mesh
@@ -55,9 +57,12 @@ class BLEMeshController {
         // Crear servicio BLE con configuración mesh
         bleService = BLEService(
             keychain: keychain,
-            identityManager: identityManager,
-            delegate: delegate
+            idBridge: idBridge,
+            identityManager: identityManager
         )
+
+        // Configurar delegate
+        bleService?.delegate = delegate
 
         // Configurar identidad del usuario
         bleService?.myNickname = "UsuarioMesh"

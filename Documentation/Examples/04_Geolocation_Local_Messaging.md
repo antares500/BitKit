@@ -31,17 +31,17 @@ Este ejemplo muestra cómo integrar capacidades de geolocalización para crear z
 ```swift
 import BitCore
 import BitGeo
-import BitBLE
+import BitTransport
 import CoreLocation
 import Combine
 
 // Manager para geolocalización y mensajería local
 class GeoMessagingManager {
     private let locationManager: CLLocationManager
-    private let geoEngine: GeoEngine
+    private let locationStateManager: LocationStateManager
+    private let geoRelayDirectory: GeoRelayDirectory
     private let bleService: BLEService
-    private let privacyManager: LocationPrivacyManager
-    private let delegate: MiDelegate
+    private let delegate: BitDelegate
 
     // Publishers para estado de ubicación
     private var locationPublisher = PassthroughSubject<CLLocation, Never>()
@@ -52,14 +52,23 @@ class GeoMessagingManager {
     private var nearbyPeers: [NearbyPeer] = []
     private var locationSubscription: AnyCancellable?
 
-    init(bleService: BLEService, delegate: MiDelegate) {
-        self.bleService = bleService
+    init(delegate: BitDelegate) {
         self.delegate = delegate
 
         // Inicializar componentes
+        let keychain = KeychainManager()
+        let idBridge = NostrIdentityBridge(keychain: keychain)
+        let identityManager = SecureIdentityStateManager(keychain)
+        
+        bleService = BLEService(
+            keychain: keychain,
+            idBridge: idBridge,
+            identityManager: identityManager
+        )
+        
         locationManager = CLLocationManager()
-        geoEngine = GeoEngine()
-        privacyManager = LocationPrivacyManager()
+        locationStateManager = LocationStateManager.shared
+        geoRelayDirectory = GeoRelayDirectory()
 
         // Configurar location manager
         configurarLocationManager()
@@ -76,25 +85,17 @@ class GeoMessagingManager {
 
     // Solicitar permisos y comenzar actualizaciones
     func iniciarGeoMessaging() {
-        // Verificar permisos de privacidad primero
-        guard privacyManager.canUseLocation() else {
-            print("Error: Usuario no ha consentido uso de ubicación")
-            return
-        }
-
-        // Solicitar permisos si es necesario
-        let status = CLLocationManager.authorizationStatus()
-        switch status {
-        case .notDetermined:
-            locationManager.requestWhenInUseAuthorization()
-        case .authorizedWhenInUse, .authorizedAlways:
+        // Verificar permisos usando LocationStateManager
+        let permission = locationStateManager.publicPermissionState
+        switch permission {
+        case .authorized:
             locationManager.startUpdatingLocation()
             print("GeoMessaging iniciado - actualizando ubicación")
+        case .notDetermined:
+            locationManager.requestWhenInUseAuthorization()
         case .denied, .restricted:
             print("Error: Permisos de ubicación denegados")
             mostrarInstruccionesPermisos()
-        @unknown default:
-            print("Estado de autorización desconocido")
         }
     }
 
@@ -113,33 +114,33 @@ class GeoMessagingManager {
             return
         }
 
-        // Usar GeoEngine para calcular peers cercanos
-        let peersCercanos = geoEngine.peersWithinRadius(
-            center: miUbicacion.coordinate,
-            radiusMeters: radioMetros,
-            fromPeers: obtenerTodosLosPeersConocidos()
-        )
-
-        // Filtrar por distancia real y actualizar estado
-        nearbyPeers = peersCercanos.filter { peer in
-            let distancia = miUbicacion.distance(from: CLLocation(
-                latitude: peer.latitude,
-                longitude: peer.longitude
-            ))
-            return distancia <= radioMetros
+        // Obtener peers cercanos usando BLEService
+        Task {
+            do {
+                let discoveredPeers = try await bleService.scanForPeers(duration: 5.0)
+                nearbyPeers = discoveredPeers.compactMap { peer in
+                    guard let location = peer.location else { return nil }
+                    let distance = miUbicacion.distance(from: CLLocation(latitude: location.latitude, longitude: location.longitude))
+                    return NearbyPeer(
+                        peerID: peer.peerID,
+                        latitude: location.latitude,
+                        longitude: location.longitude,
+                        lastSeen: Date(),
+                        distance: distance
+                    )
+                }.filter { $0.distance <= radioMetros }
+                
+                // Notificar cambios
+                nearbyPeersPublisher.send(nearbyPeers)
+            } catch {
+                print("Error escaneando peers: \(error)")
+            }
         }
 
         // Notificar cambios
         nearbyPeersPublisher.send(nearbyPeers)
 
         print("Encontrados \(nearbyPeers.count) peers cercanos en \(radioMetros)m")
-    }
-
-    // Obtener todos los peers conocidos (placeholder)
-    private func obtenerTodosLosPeersConocidos() -> [NearbyPeer] {
-        // En una implementación real, esto vendría de BLE discoveries
-        // y base de datos local
-        return []
     }
 
     // Crear zona de chat local
@@ -179,8 +180,15 @@ class GeoMessagingManager {
             return
         }
 
-        // Unirse a la zona (placeholder para lógica de BLE/mesh)
-        print("Unido a zona: \(zona.name)")
+        // Unirse a la zona conectando vía BLE mesh
+        Task {
+            do {
+                try await bleService.connect(to: zona.creator)
+                print("Conectado exitosamente a zona: \(zona.name)")
+            } catch {
+                print("Error conectando a zona: \(error)")
+            }
+        }
     }
 
     // Enviar mensaje a zona local
@@ -202,22 +210,41 @@ class GeoMessagingManager {
         print("Mensaje enviado a zona \(zona.name): \(mensaje)")
     }
 
-    // Anunciar zona vía BLE (placeholder)
+    // Anunciar zona vía BLE advertisement
     private func anunciarZona(_ zona: LocalChatZone) {
-        // En implementación real, broadcast vía BLE advertisement
-        print("Anunciando zona: \(zona.name)")
+        Task {
+            do {
+                let zoneData = try JSONEncoder().encode(zona)
+                try await bleService.startAdvertising(with: zoneData)
+                print("Anunciando zona: \(zona.name)")
+            } catch {
+                print("Error anunciando zona: \(error)")
+            }
+        }
     }
 
-    // Enviar paquete local (placeholder)
+    // Enviar paquete local vía BLE mesh
     private func enviarPaqueteLocal(_ paquete: LocalMessagePacket, zona: LocalChatZone) {
-        // En implementación real, usar BLE mesh para distribución
-        print("Enviando paquete a zona")
+        Task {
+            do {
+                let packetData = try JSONEncoder().encode(paquete)
+                try await bleService.broadcast(data: packetData, toPeersInRange: zona.radiusMeters)
+                print("Paquete enviado a zona")
+            } catch {
+                print("Error enviando paquete: \(error)")
+            }
+        }
     }
 
-    // Obtener mi PeerID (placeholder)
+    // Obtener mi PeerID del identity manager
     private func obtenerMiPeerID() -> PeerID {
-        // En implementación real, obtener del keychain/estado
-        return PeerID(data: Data([0x01, 0x02, 0x03, 0x04]))!
+        do {
+            let identity = try identityManager.getCurrentIdentity()
+            return identity.peerID
+        } catch {
+            // Fallback a PeerID generado
+            return PeerID(str: "fallback-\(UUID().uuidString.prefix(8))")!
+        }
     }
 
     // Mostrar instrucciones para permisos
@@ -326,15 +353,24 @@ struct LocalMessagePacket {
 class LocationPrivacyManager {
     // Verificar si podemos usar ubicación
     func canUseLocation() -> Bool {
-        // En implementación real, verificar consentimiento del usuario
-        // y políticas de privacidad
-        return true  // Placeholder
+        let status = CLLocationManager.authorizationStatus()
+        return status == .authorizedWhenInUse || status == .authorizedAlways
     }
 
     // Encriptar datos de ubicación antes de almacenar
     func encryptLocationData(_ location: CLLocation) -> Data? {
-        // En implementación real, usar crypto para encriptar
-        return nil  // Placeholder
+        do {
+            let locationData = try JSONEncoder().encode([
+                "lat": location.coordinate.latitude,
+                "lon": location.coordinate.longitude,
+                "timestamp": location.timestamp.timeIntervalSince1970
+            ])
+            // En implementación real, usar BitCore crypto para encriptar
+            return locationData  // Por simplicidad, devolver sin encriptar
+        } catch {
+            print("Error encriptando ubicación: \(error)")
+            return nil
+        }
     }
 
     // Limpiar datos de ubicación después de uso

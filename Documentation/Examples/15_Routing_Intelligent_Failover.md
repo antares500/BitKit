@@ -1,78 +1,115 @@
-# 15 - Logging y Monitoreo Avanzado
+# 15 - Routing Inteligente y Failover
 
 ## Descripción
 
-Este ejemplo muestra cómo implementar un sistema completo de logging y monitoreo en BitLogger. Aprenderás a configurar niveles de log, filtros personalizados, rotación de logs, integración con sistemas externos y análisis de logs para debugging y auditoría.
+Este ejemplo muestra cómo implementar routing inteligente y failover automático en BitRouting. Aprenderás a configurar rutas óptimas, detección de fallos, balanceo de carga, enrutamiento geográfico y recuperación automática de conexiones caídas.
 
 **Beneficios:**
-- Logs estructurados con niveles configurables
-- Filtros y rotación automática de logs
-- Integración con sistemas de monitoreo externos
-- Análisis de logs para debugging y auditoría
-- Logs seguros que no exponen información sensible
+- Enrutamiento automático basado en calidad de conexión
+- Failover transparente entre transportes
+- Optimización de rutas para latencia mínima
+- Recuperación automática de conexiones perdidas
+- Balanceo de carga inteligente
 
 **Consideraciones:**
-- Implementa rotación para evitar crecimiento ilimitado
-- Configura niveles apropiados para producción vs desarrollo
-- Protege logs sensibles con encriptación
-- Implementa límites de retención de logs
-- Considera el impacto en rendimiento del logging
+- Implementa timeouts apropiados para detección de fallos
+- Considera el costo de batería de reintentos
+- Configura prioridades de transporte según contexto
+- Implementa límites de reintentos para evitar bucles
+- Monitorea métricas de routing para optimización
 
 ## Pasos Previos Obligatorios
 
 1. **Completar Configuración Básica** (Ejemplo 01)
-2. **Añadir BitLogger** a las dependencias del proyecto
+2. **Configurar Múltiples Transportes** (Ejemplos 02-04)
+3. **Añadir BitRouting** a las dependencias del proyecto
 
 ## Código de Implementación
 
 ```swift
 import BitCore
-import BitLogger
+import BitRouting
+import BitTransport
+import BitCommunications
 
-// Configuración avanzada de logging
-class AdvancedLogger {
-    private let logger = BitLogger.shared
+// Router inteligente con failover
+class IntelligentRouter {
+    private let router = BitRouter()
+    private let transportCoordinator = TransportCoordinator()
     
     init() {
-        configureLogging()
+        configureRouting()
+        setupFailover()
     }
     
-    private func configureLogging() {
-        // Configurar niveles por componente
-        logger.setLevel(.debug, for: "BitTransport")
-        logger.setLevel(.info, for: "BitCommunications")
-        logger.setLevel(.warning, for: "BitAnalytics")
+    private func configureRouting() {
+        // Configurar estrategias de routing
+        router.addStrategy(.lowestLatency)
+        router.addStrategy(.highestBandwidth)
+        router.addStrategy(.geographicProximity)
         
-        // Configurar filtros
-        logger.addFilter { logEntry in
-            // Filtrar logs sensibles
-            !logEntry.message.contains("privateKey")
+        // Configurar prioridades de transporte
+        router.setPriority(.ble, priority: 1.0)  // Alta prioridad para BLE local
+        router.setPriority(.nostr, priority: 0.8) // Buena para global
+        router.setPriority(.tor, priority: 0.5)   // Baja para anonimato
+        
+        // Configurar rutas geográficas
+        router.enableGeographicRouting(radius: 1000) // 1km para BLE
+    }
+    
+    private func setupFailover() {
+        // Configurar failover automático
+        router.enableFailover(maxRetries: 3, backoffStrategy: .exponential)
+        
+        // Monitorear calidad de conexiones
+        router.setQualityThreshold(minQuality: 0.7) { transport, quality in
+            print("Calidad de \(transport) cambió a \(quality)")
+            if quality < 0.5 {
+                self.router.deprioritize(transport)
+            }
         }
         
-        // Configurar rotación
-        logger.enableRotation(maxSize: 10 * 1024 * 1024, maxFiles: 5)
-        
-        // Configurar exportación externa
-        logger.setExternalHandler { logEntry in
-            // Enviar a sistema de monitoreo
-            self.sendToMonitoringSystem(logEntry)
+        // Configurar recuperación automática
+        router.onConnectionLost { transport, peerID in
+            print("Conexión perdida con \(peerID) en \(transport)")
+            // Intentar reconectar vía otro transporte
+            self.attemptReconnection(peerID)
         }
     }
     
-    func logApplicationEvent() {
-        logger.info("Application started", category: "AppLifecycle")
-        logger.debug("Initializing services", category: "Initialization", metadata: ["services": ["BLE", "Nostr"]])
+    func sendMessageWithRouting(_ message: BitMessage, to peerID: PeerID) {
+        // El router elige automáticamente el mejor transporte
+        router.route(message, to: peerID) { result in
+            switch result {
+            case .success:
+                print("Mensaje enviado exitosamente")
+            case .failure(let error):
+                print("Error de routing: \(error)")
+                // Intentar con transporte alternativo
+                self.fallbackSend(message, to: peerID)
+            }
+        }
     }
     
-    private func sendToMonitoringSystem(_ entry: LogEntry) {
-        // Implementar envío a sistema externo (ej. Sentry, Logstash)
-        print("Sending to monitoring: \(entry)")
+    private func attemptReconnection(_ peerID: PeerID) {
+        // Intentar reconectar vía transporte alternativo
+        router.findAlternativeRoute(to: peerID) { alternative in
+            if let alt = alternative {
+                print("Intentando reconexión vía \(alt)")
+                // Implementar lógica de reconexión
+            }
+        }
+    }
+    
+    private func fallbackSend(_ message: BitMessage, to peerID: PeerID) {
+        // Lógica de fallback manual si el routing falla
+        transportCoordinator.sendViaAnyAvailableTransport(message, to: peerID)
     }
 }
 
 // Uso en la app
-let advancedLogger = AdvancedLogger()
-advancedLogger.logApplicationEvent()
+let intelligentRouter = IntelligentRouter()
+// El router maneja automáticamente el routing inteligente
 ```
 
     // Métodos adicionales requeridos por el protocolo

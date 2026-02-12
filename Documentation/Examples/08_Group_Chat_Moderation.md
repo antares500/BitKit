@@ -31,7 +31,7 @@ Este ejemplo demuestra cómo implementar un sistema completo de grupos de chat c
 ```swift
 import BitCore
 import BitCommunications
-import BitBLE
+import BitTransport
 import Combine
 
 // Manager principal de grupos
@@ -324,8 +324,8 @@ class GroupManager {
 
     // Obtener PeerID actual
     private func getCurrentPeerID() throws -> PeerID {
-        // Implementar obtención del PeerID actual
-        return PeerID(data: Data([0x01, 0x02, 0x03, 0x04])) // Placeholder
+        // En implementación real, obtener del identity manager
+        return PeerID(str: "example")
     }
 
     // Configurar manejo de eventos de grupo

@@ -34,7 +34,7 @@ Este ejemplo muestra cómo implementar transferencias de archivos robustas y str
 
 ```swift
 import BitCore
-import BitBLE
+import BitTransport
 import BitNostr
 import CryptoKit
 import Compression
@@ -247,9 +247,13 @@ class FileTransferManager {
     private func performMediaStreaming(_ stream: MediaStream) async {
         do {
             // Implementar lógica de streaming adaptativo
-            // Esto incluiría buffering, ajuste de calidad, etc.
-            print("🎬 Streaming implementado (placeholder)")
-
+            // Iniciar buffering inicial
+            try await startBuffering(for: stream)
+            
+            // Comenzar streaming con calidad adaptativa
+            try await adaptiveStreamingLoop(for: stream)
+            
+            print("🎬 Streaming completado exitosamente")
         } catch {
             print("❌ Streaming falló: \(error.localizedDescription)")
         }
@@ -326,9 +330,15 @@ class FileTransferManager {
 
     // Encriptar datos de archivo
     private func encryptFileData(_ data: Data) async throws -> Data {
-        // Implementar encriptación AES-256
-        // Placeholder - usar CryptoKit en implementación real
-        return data
+        // Generar clave AES-256 para esta transferencia
+        let key = SymmetricKey(size: .bits256)
+        let nonce = AES.GCM.Nonce()
+        
+        // Encriptar datos
+        let sealedBox = try AES.GCM.seal(data, using: key, nonce: nonce)
+        
+        // Combinar nonce y datos encriptados
+        return nonce.withUnsafeBytes { Data($0) } + sealedBox.ciphertext + sealedBox.tag
     }
 
     // MARK: - Comunicación con Transportes
@@ -517,8 +527,25 @@ class FileTransferManager {
 
     // Desencriptar datos de archivo
     private func decryptFileData(_ data: Data) async throws -> Data {
-        // Implementar desencriptación
-        return data // Placeholder
+        // Extraer nonce (12 bytes), ciphertext y tag
+        let nonceSize = 12
+        let tagSize = 16
+        
+        guard data.count > nonceSize + tagSize else {
+            throw TransferError.decryptionFailed
+        }
+        
+        let nonceData = data.prefix(nonceSize)
+        let ciphertext = data.dropFirst(nonceSize).dropLast(tagSize)
+        let tag = data.suffix(tagSize)
+        
+        let nonce = try AES.GCM.Nonce(data: nonceData)
+        let sealedBox = try AES.GCM.SealedBox(nonce: nonce, ciphertext: ciphertext, tag: tag)
+        
+        // Usar la misma clave (en implementación real, obtener de keychain)
+        let key = SymmetricKey(size: .bits256) // Placeholder - usar clave real
+        
+        return try AES.GCM.open(sealedBox, using: key)
     }
 
     // Guardar archivo transferido
@@ -783,13 +810,13 @@ struct FileTransferRequest {
     let options: TransferOptions
 
     func encoded() throws -> Data {
-        // Implementar codificación
-        return Data() // Placeholder
+        let encoder = JSONEncoder()
+        return try encoder.encode(self)
     }
 
     static func decode(from data: Data) throws -> FileTransferRequest {
-        // Implementar decodificación
-        throw TransferError.decodingFailed // Placeholder
+        let decoder = JSONDecoder()
+        return try decoder.decode(FileTransferRequest.self, from: data)
     }
 }
 
@@ -941,7 +968,9 @@ extension FileTransferViewController: UIDocumentPickerDelegate {
 
         Task {
             do {
-                let peerID = PeerID(data: Data([0x01, 0x02, 0x03, 0x04]))! // Placeholder - obtener peer real
+                // Obtener peer seleccionado de la UI (en implementación real)
+                // Por ahora, usar un peer de ejemplo válido
+                let peerID = PeerID(str: "example-peer-\(UUID().uuidString.prefix(8))")!
                 _ = try await transferManager.startFileTransfer(fileURL: fileURL, to: peerID)
             } catch {
                 showError("Error iniciando transferencia: \(error.localizedDescription)")

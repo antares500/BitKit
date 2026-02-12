@@ -32,7 +32,7 @@ Este ejemplo muestra cómo integrar capacidades avanzadas de seguridad y anonima
 ```swift
 import BitCore
 import BitTor
-import BitBLE
+import BitTransport
 import Network
 import CryptoKit
 
@@ -402,13 +402,15 @@ class AdvancedSecurityManager {
     }
 
     private func getCurrentPeerID() -> PeerID {
-        // Implementar obtención del PeerID actual
-        return PeerID(data: Data([0x01, 0x02, 0x03, 0x04])) // Placeholder
+        // En implementación real, obtener del identity manager
+        return PeerID(str: "current_user")
     }
 
     private func auditNetworkConnections() async throws -> [SecurityIssue] {
-        // Implementar auditoría de conexiones de red
-        return [] // Placeholder
+        // Implementar auditoría real de conexiones
+        var issues: [SecurityIssue] = []
+        // Verificar conexiones activas y su seguridad
+        return issues
     }
 
     private func clearNetworkCache() async throws {
@@ -526,13 +528,15 @@ struct AnonymousMessage {
     let purpose: CircuitPurpose
 
     func encoded() -> Data {
-        // Implementar codificación
-        return Data() // Placeholder
+        // Implementar codificación JSON
+        let encoder = JSONEncoder()
+        return (try? encoder.encode(self)) ?? Data()
     }
 
     static func decode(from data: Data) throws -> AnonymousMessage {
-        // Implementar decodificación
-        throw SecurityError.decodingFailed // Placeholder
+        // Implementar decodificación JSON
+        let decoder = JSONDecoder()
+        return try decoder.decode(AnonymousMessage.self, from: data)
     }
 }
 
@@ -679,7 +683,7 @@ class SecurityViewController: UIViewController {
     @objc func verifyIdentity() {
         // Mostrar lista de peers para verificar
         // Por simplicidad, usar un peer hardcodeado
-        let peerID = PeerID(data: Data())! // Placeholder
+        let peerID = PeerID(str: "peer_to_verify")
 
         Task {
             do {

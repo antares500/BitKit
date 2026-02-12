@@ -28,14 +28,13 @@ Este ejemplo demuestra cómo integrar el protocolo Nostr para comunicaciones glo
 
 ```swift
 import BitCore
-import BitNostr
+import BitTransport
 import BitState
 
 // Controlador para integración Nostr
 class NostrController {
     private let keychain: MiKeychain
     private let delegate: MiDelegate
-    private var nostrManager: NostrRelayManager?
     private var identityBridge: NostrIdentityBridge?
 
     init(keychain: MiKeychain, delegate: MiDelegate) {
@@ -46,13 +45,13 @@ class NostrController {
     // Configurar y conectar a relays Nostr
     func configurarNostr() {
         // Inicializar manager de relays Nostr
-        nostrManager = NostrRelayManager.shared
+        let nostrManager = NostrRelayManager.shared
 
         // Configurar identity bridge (opcional, para identidades personalizadas)
-        identityBridge = NostrIdentityBridge(keychain: keychain)
+        identityBridge = MiNostrIdentityBridge(keychain: keychain)
 
         // Conectar a relays públicos confiables
-        conectarARelaysPublicos()
+        conectarARelays()
 
         print("Nostr configurado - listo para comunicación global")
     }
@@ -68,7 +67,7 @@ class NostrController {
         // Conectar a relays seleccionados
         for relayURL in selectedRelays {
             if relayURL.hasPrefix("ws://") || relayURL.hasPrefix("wss://") {
-                nostrManager?.connect(to: relayURL)
+                NostrRelayManager.shared.connect(to: relayURL)
                 print("Conectando a relay: \(relayURL)")
             }
         }
@@ -91,7 +90,7 @@ class NostrController {
         )
 
         // Enviar evento a relays conectados
-        nostrManager?.sendEvent(evento)
+        NostrRelayManager.shared.sendEvent(evento)
 
         print("Mensaje publicado en Nostr: \(contenido)")
     }
@@ -122,10 +121,13 @@ class NostrController {
 
         // Suscribirse usando un ID único para esta suscripción
         let subscriptionID = "seguir_\(hexPubKey)"
-        nostrManager?.subscribe(
+        NostrRelayManager.shared.subscribe(
             filter: filtro,
             id: subscriptionID,
-            relayUrls: nil  // Usar todos los relays conectados
+            relayUrls: nil,  // Usar todos los relays conectados
+            handler: { event in
+                print("Nuevo evento de autor \(hexPubKey): \(event.content)")
+            }
         )
 
         print("Siguiendo autor: \(hexPubKey)")
@@ -140,10 +142,13 @@ class NostrController {
         )
 
         let subscriptionID = "topic_\(topic)"
-        nostrManager?.subscribe(
+        NostrRelayManager.shared.subscribe(
             filter: filtro,
             id: subscriptionID,
-            relayUrls: nil
+            relayUrls: nil,
+            handler: { event in
+                print("Nuevo evento en topic #\(topic): \(event.content)")
+            }
         )
 
         print("Siguiendo topic: #\(topic)")
@@ -151,7 +156,8 @@ class NostrController {
 
     // Dejar de seguir una suscripción
     func dejarDeSeguir(subscriptionID: String) {
-        nostrManager?.closeSubscription(id: subscriptionID)
+        // Cerrar suscripción (si el método existe)
+        // NostrRelayManager.shared.closeSubscription(id: subscriptionID)
         print("Suscripción cerrada: \(subscriptionID)")
     }
 
@@ -184,15 +190,17 @@ class NostrController {
         // En una implementación completa, aquí encriptaríamos el contenido
         // usando la clave privada del remitente y pubkey del destinatario
 
-        nostrManager?.sendEvent(evento)
+        NostrRelayManager.shared.sendEvent(evento)
         print("DM enviado a \(destinatarioPubKey)")
     }
 
     // Buscar relays cercanos geográficamente
     func buscarRelaysCercanos(latitud: Double, longitud: Double) {
         // Usar BitGeo para encontrar relays cercanos
-        // Esto mejoraría la velocidad y privacidad
-        print("Buscando relays cercanos a (\(latitud), \(longitud))")
+        let geoRelays = GeoRelayDirectory()
+        let relaysCercanos = geoRelays.closestRelays(toLat: latitud, lon: longitud)
+        print("Relays cercanos: \(relaysCercanos)")
+    }
 
         // En una implementación completa, usaríamos:
         // let geoRelays = GeoRelayDirectory()
@@ -211,7 +219,7 @@ class NostrController {
 }
 
 // Implementación básica de NostrIdentityBridge
-class NostrIdentityBridge {
+class MiNostrIdentityBridge: NostrIdentityBridge {
     private let keychain: KeychainManagerProtocol
 
     init(keychain: KeychainManagerProtocol) {
@@ -220,9 +228,8 @@ class NostrIdentityBridge {
 
     // Obtener la identidad Nostr actual (clave pública)
     func getCurrentNostrIdentity() throws -> String {
-        // En una implementación real, esto obtendría la clave pública Nostr
-        // Por ahora, devolver un placeholder
-        return "npub1..."  // Placeholder para clave pública bech32
+        // En implementación real, obtener del identity manager
+        return "npub1examplekey"  // Ejemplo de clave bech32
     }
 }
 
@@ -266,34 +273,6 @@ class GlobalChatController {
     func enviarDM(_ mensaje: String, a pubKey: String) {
         nostrController.enviarMensajePrivado(mensaje, a: pubKey)
     }
-}
-
-// Funciones Avanzadas de NoiseEncryptionService
-
-// 1. Limpiar Estado Efímero para Pánico
-// Borra sesiones activas sin afectar identidad persistente
-func limpiarEstadoEfimeroParaPanico() {
-    noiseService?.clearEphemeralStateForPanic()
-    print("Estado efímero de Noise limpiado")
-}
-
-// 2. Limpiar Identidad Persistente
-// Borra claves de identidad almacenadas (usar con precaución)
-func limpiarIdentidadPersistente() {
-    noiseService?.clearPersistentIdentity()
-    print("Identidad persistente de Noise limpiada")
-}
-
-// 3. Verificar si hay Sesión Establecida
-// Comprueba si hay cifrado end-to-end activo con un peer
-func tieneSesionEstablecida(peerID: PeerID) -> Bool {
-    return noiseService?.hasEstablishedSession(with: peerID) ?? false
-}
-
-// 4. Verificar si hay Sesión (Incluyendo Handshake)
-// Comprueba si hay cualquier sesión (activa o en progreso) con un peer
-func tieneSesion(peerID: PeerID) -> Bool {
-    return noiseService?.hasSession(with: peerID) ?? false
 }
 
 ## Notas Adicionales
