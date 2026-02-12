@@ -123,27 +123,25 @@ final class GeoRelayDirectory {
                 return
             }
 
-            do {
-                let (data, _) = try await TorURLSession.shared.session.data(for: request)
+            let (data, _) = try await TorURLSession.shared.session.data(for: request)
             #else
-            do {
-                let (data, _) = try await URLSession.shared.data(for: request)
+            let (data, _) = try await URLSession.shared.data(for: request)
             #endif
-                guard let text = String(data: data, encoding: .utf8) else {
-                    await self.handleFetchFailure(.invalidData)
-                    return
-                }
-
-                let parsed = GeoRelayDirectory.parseCSV(text)
-                guard !parsed.isEmpty else {
-                    await self.handleFetchFailure(.invalidData)
-                    return
-                }
-
-                await self.handleFetchSuccess(entries: parsed, csv: text)
-            } catch {
-                await self.handleFetchFailure(.network(error))
+            
+            guard let text = String(data: data, encoding: .utf8) else {
+                await self.handleFetchFailure(.invalidData)
+                return
             }
+
+            let parsed = GeoRelayDirectory.parseCSV(text)
+            guard !parsed.isEmpty else {
+                await self.handleFetchFailure(.invalidData)
+                return
+            }
+
+            await self.handleFetchSuccess(entries: parsed, csv: text)
+        } catch {
+            await self.handleFetchFailure(.network(error))
         }
     }
 

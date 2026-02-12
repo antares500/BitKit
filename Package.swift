@@ -35,7 +35,7 @@ let package = Package(
         .target(name: "BitGeo",             dependencies: ["BitCore", "BitLogger"], path: "Sources/Geo"),
         .target(name: "BitRouting",         dependencies: ["BitCore"],              path: "Sources/Routing"),
         .target(name: "BitChatGroup",       dependencies: ["BitCore"],              path: "Sources/ChatGroup"),
-        .target(name: "BitReliability",     dependencies: ["BitCore"],      path: "Sources/ReliabilityExtended"),
+        .target(name: "BitReliability",     dependencies: ["BitCore", "BitState"],      path: "Sources/ReliabilityExtended"),
         .target(name: "BitAnalytics",       dependencies: ["BitCommunications"],    path: "Sources/Analytics"),
         .target(name: "BitKit",             dependencies: ["BitCore", "BitTransport", "BitGeo", "BitState", "BitMedia", "BitCommunications", "BitChatGroup", "BitReliability", "BitAnalytics"], path: "Sources/Kit"),
         .testTarget(name: "BitCoreTests", dependencies: ["BitCore", "BitState", "BitMedia"], path: "Tests"),

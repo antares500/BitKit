@@ -5,9 +5,9 @@ import BitCore
 import BitState
 
 public class VerificationManager: ObservableObject {
-    private let identityManager: BitState.SecureIdentityStateManagerProtocol
+    private let identityManager: SecureIdentityStateManagerProtocol
     
-    public init(identityManager: BitState.SecureIdentityStateManagerProtocol) {
+    public init(identityManager: SecureIdentityStateManagerProtocol) {
         self.identityManager = identityManager
     }
     
