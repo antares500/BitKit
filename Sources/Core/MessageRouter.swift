@@ -41,6 +41,28 @@ public class MessageRouter {
             }
         }
     }
+
+    public func searchMessages(containing query: String, from sender: String? = nil) -> [BitMessage] {
+        // Placeholder: implementar con history real
+        return []
+    }
+    
+    public func filterMessages(by sender: String) -> [BitMessage] {
+        return []
+    }
+    
+    private var offlineCache: [BitMessage] = []
+    
+    public func cacheForOffline(_ message: BitMessage) {
+        offlineCache.append(message)
+    }
+    
+    public func flushOfflineCache() {
+        for message in offlineCache {
+            sendMessage(message.content, mentions: [])
+        }
+        offlineCache.removeAll()
+    }
 }
 
 // Wrapper to handle transport delegate calls
