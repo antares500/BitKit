@@ -219,6 +219,7 @@ final class NostrRelayManager: ObservableObject {
     func sendEvent(_ event: NostrEvent, to relayUrls: [String]? = nil) {
         // Global network policy gate
         guard networkService.activationAllowed else { return }
+        #if canImport(BitTor)
         if shouldUseTor && TorManager.shared.torEnforced && !TorManager.shared.isReady {
             // Defer sends until Tor is ready to avoid premature queueing
             Task.detached { [weak self] in
@@ -228,6 +229,7 @@ final class NostrRelayManager: ObservableObject {
             }
             return
         }
+        #endif
         let requestedRelays = relayUrls ?? Self.generalRelays
         let targetRelays = allowedRelayList(from: requestedRelays)
         guard !targetRelays.isEmpty else { return }
@@ -309,7 +311,7 @@ final class NostrRelayManager: ObservableObject {
             // Defer subscription setup until Tor is ready; avoid queuing subs early
             Task.detached { [weak self] in
                 guard let self = self else { return }
-                let ready = await TorManager.shared.awaitReady()
+                let ready = await self.isTorReady()
                 await MainActor.run {
                     if ready {
                         self.subscribe(filter: filter, id: id, relayUrls: relayUrls, handler: handler)
