@@ -12,7 +12,6 @@ let package = Package(
         .library(name: "BitMedia", targets: ["BitMedia"]),
         .library(name: "BitTransport", targets: ["BitTransport"]),
         .library(name: "BitCommunications", targets: ["BitCommunications"]),
-        .library(name: "BitIdentity", targets: ["BitIdentity"]),
         .library(name: "BitGeo", targets: ["BitGeo"]),
         .library(name: "BitRouting", targets: ["BitRouting"]),
         .library(name: "BitChatGroup", targets: ["BitChatGroup"]),
@@ -31,13 +30,13 @@ let package = Package(
         .target(name: "BitMedia",           dependencies: ["BitCore"],              path: "Sources/Media"),
         .target(name: "BitTransport",       dependencies: ["BitCore", "BitState", "BitLogger", "BitGeo", .product(name: "P256K", package: "swift-secp256k1")], path: "Sources/Transport"),
         .target(name: "BitCommunications",  dependencies: ["BitCore", "BitLogger"], path: "Sources/Communications"),
-        .target(name: "BitIdentity",        dependencies: ["BitCore"],              path: "Sources/Identity"),
         .target(name: "BitGeo",             dependencies: ["BitCore", "BitLogger"], path: "Sources/Geo"),
         .target(name: "BitRouting",         dependencies: ["BitCore"],              path: "Sources/Routing"),
         .target(name: "BitChatGroup",       dependencies: ["BitCore"],              path: "Sources/ChatGroup"),
         .target(name: "BitReliability",     dependencies: ["BitCore", "BitState"],      path: "Sources/ReliabilityExtended"),
         .target(name: "BitAnalytics",       dependencies: ["BitCommunications"],    path: "Sources/Analytics"),
         .target(name: "BitKit",             dependencies: ["BitCore", "BitTransport", "BitGeo", "BitState", "BitMedia", "BitCommunications", "BitChatGroup", "BitReliability", "BitAnalytics"], path: "Sources/Kit"),
-        .testTarget(name: "BitCoreTests", dependencies: ["BitCore", "BitState", "BitMedia"], path: "Tests"),
+        .testTarget(name: "BitCoreTests", dependencies: ["BitCore", "BitState", "BitMedia"], path: "Tests/BitCoreTests"),
+        .testTarget(name: "BitKitTests", dependencies: ["BitKit"], path: "Tests/BitKitTests")
     ]
 )
