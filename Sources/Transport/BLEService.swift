@@ -121,7 +121,7 @@ public final class BLEService: NSObject, Transport {
     // MARK: - Identity
     
     private var noiseService: NoiseEncryptionService
-    private let identityManager: BitState.SecureIdentityStateManagerProtocol
+    private let identityManager: BitCore.SecureIdentityStateManagerProtocol
     private let keychain: KeychainManagerProtocol
     private let idBridge: NostrIdentityBridge
     private let applicationInfoProvider: ApplicationInfoProvider?
@@ -256,7 +256,7 @@ public final class BLEService: NSObject, Transport {
     public init(
         keychain: KeychainManagerProtocol,
         idBridge: NostrIdentityBridge,
-        identityManager: BitState.SecureIdentityStateManagerProtocol,
+        identityManager: BitCore.SecureIdentityStateManagerProtocol,
         applicationInfoProvider: ApplicationInfoProvider? = nil
     ) {
         self.keychain = keychain
