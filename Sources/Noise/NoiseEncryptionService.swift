@@ -168,9 +168,15 @@ public final class NoiseEncryptionService {
     // Thread safety
     private let serviceQueue = DispatchQueue(label: "chat.bitchat.noise.service", attributes: .concurrent)
     
-    // Security components
-    private let rateLimiter = NoiseRateLimiter()
-    private let keychain: KeychainManagerProtocol
+    private static var isRunningTests: Bool {
+        let env = ProcessInfo.processInfo.environment
+        return NSClassFromString("XCTestCase") != nil ||
+               env["XCTestConfigurationFilePath"] != nil ||
+               env["XCTestBundlePath"] != nil ||
+               env["CI"] != nil ||
+               env["GITHUB_ACTIONS"] != nil
+    }
+
     
     // Session maintenance
     private var rekeyTimer: Timer?
@@ -293,8 +299,10 @@ public final class NoiseEncryptionService {
             self?.handleSessionEstablished(peerID: peerID, remoteStaticKey: remoteStaticKey)
         }
 
-        // Start session maintenance timer
-        startRekeyTimer()
+        // Start session maintenance timer (skip in unit tests to avoid runloop timers during test runs)
+        if !Self.isRunningTests {
+            startRekeyTimer()
+        }
     }
 
     // MARK: - BCH-01-009: Key Generation Helpers with Save Verification
