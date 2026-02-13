@@ -35,8 +35,19 @@ final class GeoRelayDirectory {
     private var isFetching: Bool = false
     private var observers: [NSObjectProtocol] = []
 
+    private static var isRunningTests: Bool {
+        let env = ProcessInfo.processInfo.environment
+        return NSClassFromString("XCTestCase") != nil ||
+               env["XCTestConfigurationFilePath"] != nil ||
+               env["XCTestBundlePath"] != nil ||
+               env["CI"] != nil ||
+               env["GITHUB_ACTIONS"] != nil
+    }
+
     private init() {
         entries = loadLocalEntries()
+        // Don't start timers/observers when running unit tests (keeps test process clean)
+        guard !Self.isRunningTests else { return }
         registerObservers()
         startRefreshTimer()
         prefetchIfNeeded()
@@ -116,32 +127,34 @@ final class GeoRelayDirectory {
         Task.detached { [weak self] in
             guard let self else { return }
 
-            #if canImport(BitTor)
-            let ready = await TorManager.shared.awaitReady()
-            if !ready {
-                await self.handleFetchFailure(.torNotReady)
-                return
-            }
+            do {
+                #if canImport(BitTor)
+                let ready = await TorManager.shared.awaitReady()
+                if !ready {
+                    await self.handleFetchFailure(.torNotReady)
+                    return
+                }
 
-            let (data, _) = try await TorURLSession.shared.session.data(for: request)
-            #else
-            let (data, _) = try await URLSession.shared.data(for: request)
-            #endif
-            
-            guard let text = String(data: data, encoding: .utf8) else {
-                await self.handleFetchFailure(.invalidData)
-                return
-            }
+                let (data, _) = try await TorURLSession.shared.session.data(for: request)
+                #else
+                let (data, _) = try await URLSession.shared.data(for: request)
+                #endif
+                
+                guard let text = String(data: data, encoding: .utf8) else {
+                    await self.handleFetchFailure(.invalidData)
+                    return
+                }
 
-            let parsed = GeoRelayDirectory.parseCSV(text)
-            guard !parsed.isEmpty else {
-                await self.handleFetchFailure(.invalidData)
-                return
-            }
+                let parsed = GeoRelayDirectory.parseCSV(text)
+                guard !parsed.isEmpty else {
+                    await self.handleFetchFailure(.invalidData)
+                    return
+                }
 
-            await self.handleFetchSuccess(entries: parsed, csv: text)
-        } catch {
-            await self.handleFetchFailure(.network(error))
+                await self.handleFetchSuccess(entries: parsed, csv: text)
+            } catch {
+                await self.handleFetchFailure(.network(error))
+            }
         }
     }
 
