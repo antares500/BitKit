@@ -1,23 +1,8 @@
 import Foundation
 
-// Basic identity types to avoid circular dependencies
-public struct CryptographicIdentity {
-    public let fingerprint: String
-    public let publicKey: Data
-    public var signingPublicKey: Data?
-    public let firstSeen: Date
-    public let lastHandshake: Date?
-}
-
-public struct SocialIdentity {
-    public let fingerprint: String
-    public var localPetname: String?
-    public var claimedNickname: String
-    public var trustLevel: String
-    public var isFavorite: Bool
-    public var isBlocked: Bool
-    public var notes: String?
-}
+// Identity model types are defined in `IdentityModels.swift` to avoid duplication
+// and keep a single canonical source for Codable/data-model definitions.
+// (Struct declarations removed from this file to prevent symbol collisions.)
 
 #if canImport(CoreBluetooth)
 import CoreBluetooth
@@ -31,6 +16,7 @@ public protocol KeychainManagerProtocol {
     func load(key: String, service: String) -> Data?
     func delete(key: String, service: String)
 }
+
 public protocol SecureIdentityStateManagerProtocol {
     // MARK: Secure Loading/Saving
     func forceSave()
@@ -55,7 +41,30 @@ public protocol SecureIdentityStateManagerProtocol {
     // MARK: Geohash (Nostr) Blocking
     func isNostrBlocked(pubkeyHexLowercased: String) -> Bool
     func setNostrBlocked(_ pubkeyHexLowercased: String, isBlocked: Bool)
+    func getBlockedNostrPubkeys() -> Set<String>
+    
+    // MARK: Ephemeral Session Management
+    func registerEphemeralSession(peerID: PeerID, handshakeState: HandshakeState)
+    func updateHandshakeState(peerID: PeerID, state: HandshakeState)
+    
+    // MARK: Cleanup
+    func clearAllIdentityData()
+    func removeEphemeralSession(peerID: PeerID)
+    
+    // MARK: Verification
+    func setVerified(fingerprint: String, verified: Bool)
+    func isVerified(fingerprint: String) -> Bool
+    func getVerifiedFingerprints() -> Set<String>
+    
+    // MARK: Backup and Restore
+    func exportBackup() throws -> Data
+    func importBackup(_ data: Data) throws
+    func generateInitialIdentity() throws -> String
+    
+    // MARK: Nostr Identity
+    func getCurrentNostrIdentity() throws -> String
 }
+
 public protocol NostrIdentityBridge {
     func getCurrentNostrIdentity() throws -> String
 }
