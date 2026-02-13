@@ -95,54 +95,6 @@ import Foundation
 import CryptoKit
 import BitCore
 
-public protocol SecureIdentityStateManagerProtocol {
-    // MARK: Secure Loading/Saving
-    func forceSave()
-    
-    // MARK: Social Identity Management
-    func getSocialIdentity(for fingerprint: String) -> SocialIdentity?
-    
-    // MARK: Cryptographic Identities
-    func upsertCryptographicIdentity(fingerprint: String, noisePublicKey: Data, signingPublicKey: Data?, claimedNickname: String?)
-    func getCryptoIdentitiesByPeerIDPrefix(_ peerID: PeerID) -> [CryptographicIdentity]
-    func updateSocialIdentity(_ identity: SocialIdentity)
-    
-    // MARK: Favorites Management
-    func getFavorites() -> Set<String>
-    func setFavorite(_ fingerprint: String, isFavorite: Bool)
-    func isFavorite(fingerprint: String) -> Bool
-    
-    // MARK: Blocked Users Management
-    func isBlocked(fingerprint: String) -> Bool
-    func setBlocked(_ fingerprint: String, isBlocked: Bool)
-    
-    // MARK: Geohash (Nostr) Blocking
-    func isNostrBlocked(pubkeyHexLowercased: String) -> Bool
-    func setNostrBlocked(_ pubkeyHexLowercased: String, isBlocked: Bool)
-    func getBlockedNostrPubkeys() -> Set<String>
-    
-    // MARK: Ephemeral Session Management
-    func registerEphemeralSession(peerID: PeerID, handshakeState: HandshakeState)
-    func updateHandshakeState(peerID: PeerID, state: HandshakeState)
-    
-    // MARK: Cleanup
-    func clearAllIdentityData()
-    func removeEphemeralSession(peerID: PeerID)
-    
-    // MARK: Verification
-    func setVerified(fingerprint: String, verified: Bool)
-    func isVerified(fingerprint: String) -> Bool
-    func getVerifiedFingerprints() -> Set<String>
-    
-    // MARK: Backup and Restore
-    func exportBackup() throws -> Data
-    func importBackup(_ data: Data) throws
-    func generateInitialIdentity() throws -> String
-    
-    // MARK: Nostr Identity
-    func getCurrentNostrIdentity() throws -> String
-}
-
 /// Singleton manager for secure identity state persistence and retrieval.
 /// Provides thread-safe access to identity mappings with encryption at rest.
 /// All identity data is stored encrypted in the device Keychain for security.
@@ -158,6 +110,15 @@ public final class SecureIdentityStateManager: SecureIdentityStateManagerProtoco
     
     // Thread safety
     private let queue = DispatchQueue(label: "bitchat.identity.state", attributes: .concurrent)
+
+    private static var isRunningTests: Bool {
+        let env = ProcessInfo.processInfo.environment
+        return NSClassFromString("XCTestCase") != nil ||
+               env["XCTestConfigurationFilePath"] != nil ||
+               env["XCTestBundlePath"] != nil ||
+               env["CI"] != nil ||
+               env["GITHUB_ACTIONS"] != nil
+    }
     
     // Debouncing for keychain saves
     private var saveTimer: Timer?
@@ -222,9 +183,13 @@ public final class SecureIdentityStateManager: SecureIdentityStateManagerProtoco
         // Cancel any existing timer
         saveTimer?.invalidate()
         
-        // Schedule a new save after the debounce interval
-        saveTimer = Timer.scheduledTimer(withTimeInterval: saveDebounceInterval, repeats: false) { [weak self] _ in
-            self?.performSave()
+        // Schedule a new save after the debounce interval. For unit tests, perform immediate save to avoid scheduling RunLoop timers.
+        if Self.isRunningTests {
+            performSave()
+        } else {
+            saveTimer = Timer.scheduledTimer(withTimeInterval: saveDebounceInterval, repeats: false) { [weak self] _ in
+                self?.performSave()
+            }
         }
     }
     
