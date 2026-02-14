@@ -2,10 +2,11 @@
 import Foundation
 @testable import BitTransport
 
-class MockNostrTransport: NostrTransport {
+// Minimal mock for tests — NostrTransport implementation moved/renamed in production code
+class MockNostrTransport {
     var sendEventCalled = false
-    
-    override func sendMessage(_ content: String, mentions: [String]) {
+
+    func sendMessage(_ content: String, mentions: [String]) {
         sendEventCalled = true
     }
 }
