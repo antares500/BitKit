@@ -2,10 +2,11 @@
 import Foundation
 @testable import BitMedia
 
-class MockMediaManager: MediaManager {
+// Minimal mock for MediaManager API used in tests
+class MockMediaManager {
     var compressCalled = false
-    
-    override func compress(data: Data) -> Data {
+
+    func compress(data: Data) -> Data {
         compressCalled = true
         return data
     }
