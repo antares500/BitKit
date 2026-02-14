@@ -1,17 +1,17 @@
 // filepath: Tests/BitCoreTests/Mocks/MockTorManager.swift
 import Foundation
-@testable import BitTor
 
-class MockTorManager: TorManager {
+// Simple mock that mirrors the minimal TorManager API used in tests
+class MockTorManager {
     var isReadyMock = true
     var isForegroundMock = true
     var torEnforcedMock = false
-    
-    override var isReady: Bool { isReadyMock }
-    
-    override func isForeground() -> Bool { isForegroundMock }
-    
-    override var torEnforced: Bool { torEnforcedMock }
-    
-    override func awaitReady(timeout: Double) async -> Bool { isReadyMock }
+
+    var isReady: Bool { isReadyMock }
+
+    func isForeground() -> Bool { isForegroundMock }
+
+    var torEnforced: Bool { torEnforcedMock }
+
+    func awaitReady(timeout: Double = 25.0) async -> Bool { isReadyMock }
 }
