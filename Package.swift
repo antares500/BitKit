@@ -17,6 +17,7 @@ let package = Package(
         .library(name: "BitChatGroup", targets: ["BitChatGroup"]),
         .library(name: "BitReliability", targets: ["BitReliability"]),
         .library(name: "BitAnalytics", targets: ["BitAnalytics"]),
+        .library(name: "BitIdentity", targets: ["BitIdentity"]),
         .library(name: "BitKit", targets: ["BitKit"]),
     ],
     dependencies: [
@@ -35,6 +36,7 @@ let package = Package(
         .target(name: "BitChatGroup",       dependencies: ["BitCore"],              path: "Sources/ChatGroup"),
         .target(name: "BitReliability",     dependencies: ["BitCore", "BitState"],      path: "Sources/ReliabilityExtended"),
         .target(name: "BitAnalytics",       dependencies: ["BitCommunications"],    path: "Sources/Analytics"),
+        .target(name: "BitIdentity",        dependencies: ["BitCore"],              path: "Sources/Identity"),
         .target(name: "BitKit",             dependencies: ["BitCore", "BitTransport", "BitGeo", "BitState", "BitMedia", "BitCommunications", "BitChatGroup", "BitReliability", "BitAnalytics"], path: "Sources/Kit"),
         .testTarget(name: "BitCoreTests", dependencies: ["BitCore", "BitState", "BitMedia"], path: "Tests/BitCoreTests"),
         .testTarget(name: "BitKitTests", dependencies: ["BitKit"], path: "Tests/BitKitTests")
